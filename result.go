@@ -66,12 +66,12 @@ type Result struct {
 	InsertId     uint64
 }
 
-type _QueryResult struct {
+type queryResult struct {
 	Result
 	Fields []Field
 }
 
-func (res *_QueryResult) fillFields() {
+func (res *queryResult) fillFields() {
 	nfields := int(res.c.num_fields)
 	if nfields == 0 {
 		return
@@ -94,7 +94,7 @@ func (res *_QueryResult) fillFields() {
 	res.Fields = fields
 }
 
-func (res *_QueryResult) fetchNext() (row []Value, err error) {
+func (res *queryResult) fetchNext() (row []Value, err error) {
 	crow := C.our_fetch_next(&res.c)
 	if crow.has_error != 0 {
 		return nil, res.conn.lastError("")
@@ -105,10 +105,10 @@ func (res *_QueryResult) fetchNext() (row []Value, err error) {
 		return nil, nil
 	}
 
+	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(res.c.fields))
+
 	colCount := int(res.c.num_fields)
 	row = make([]Value, colCount)
-
-	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(res.c.fields))
 
 	lengths := (*[maxSize]uint64)(unsafe.Pointer(crow.lengths))
 	totalLength := uint64(0)
@@ -131,12 +131,12 @@ func (res *_QueryResult) fetchNext() (row []Value, err error) {
 	return row, nil
 }
 
-func (res *_QueryResult) close() {
+func (res *queryResult) close() {
 	C.our_close_result(&res.c)
 }
 
 type DataSet struct {
-	_QueryResult
+	queryResult
 	Rows [][]Value
 }
 
@@ -164,7 +164,7 @@ func (res *DataSet) fillRows() (err error) {
 }
 
 type DataReader struct {
-	_QueryResult
+	queryResult
 }
 
 func (res *DataReader) FetchNext() ([]Value, error) {

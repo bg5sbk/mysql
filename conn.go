@@ -115,7 +115,7 @@ func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *Result) error 
 	return nil
 }
 
-func (conn *Connection) query(sql string, mode C.OUR_MODE, res *_QueryResult, maxrows int, wantFields bool) error {
+func (conn *Connection) query(sql string, mode C.OUR_MODE, res *queryResult, maxrows int, wantFields bool) error {
 	err := conn.execute(sql, mode, &res.Result)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (conn *Connection) Execute(sql string) (res *Result, err error) {
 func (conn *Connection) QuerySet(sql string, maxrows int, wantFields bool) (res *DataSet, err error) {
 	res = &DataSet{}
 
-	err = conn.query(sql, C.OUR_MODE_SET, &res._QueryResult, maxrows, wantFields)
+	err = conn.query(sql, C.OUR_MODE_SET, &res.queryResult, maxrows, wantFields)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (conn *Connection) QuerySet(sql string, maxrows int, wantFields bool) (res 
 func (conn *Connection) QueryReader(sql string, maxrows int, wantFields bool) (res *DataReader, err error) {
 	res = &DataReader{}
 
-	err = conn.query(sql, C.OUR_MODE_READER, &res._QueryResult, maxrows, wantFields)
+	err = conn.query(sql, C.OUR_MODE_READER, &res.queryResult, maxrows, wantFields)
 	if err != nil {
 		return nil, err
 	}
