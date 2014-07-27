@@ -16,7 +16,7 @@ CGO_LDFLAGS=`mysql_config --libs` \
 go get github.com/funny/oursql
 ```
 
-If you don't have `mysql_config`. Please set `CGO_CFLAGS` and `CGO_LDFLAGS` environment variables by manual.
+Or you can set `CGO_CFLAGS` and `CGO_LDFLAGS` environment variables by manual.
 
 For example:
 
