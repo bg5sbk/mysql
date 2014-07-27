@@ -18,7 +18,7 @@ go get github.com/funny/oursql
 
 Or you can set `CGO_CFLAGS` and `CGO_LDFLAGS` environment variables by manual.
 
-For example:
+Example:
 
 ```shell
 CGO_CFLAGS="-I/usr/local/Cellar/mysql/5.6.15/include/mysql" \
