@@ -33,23 +33,6 @@ func (c *ConnectionParams) Redact() {
 	c.Pass = "***"
 }
 
-type SqlError struct {
-	Num     int
-	Message string
-	Query   string
-}
-
-func (se *SqlError) Error() string {
-	if se.Query == "" {
-		return fmt.Sprintf("%v (errno %v)", se.Message, se.Num)
-	}
-	return fmt.Sprintf("%v (errno %v) during query: %s", se.Message, se.Num, se.Query)
-}
-
-func (se *SqlError) Number() int {
-	return se.Num
-}
-
 type Connection struct {
 	c      C.MYSQL
 	closed bool
@@ -77,13 +60,6 @@ func Connect(params ConnectionParams) (conn *Connection, err error) {
 		return nil, conn.lastError("")
 	}
 	return conn, nil
-}
-
-func (conn *Connection) lastError(query string) error {
-	if err := C.our_error(&conn.c); *err != 0 {
-		return &SqlError{Num: int(C.our_errno(&conn.c)), Message: C.GoString(err), Query: query}
-	}
-	return &SqlError{0, "Unknow", string(query)}
 }
 
 func (conn *Connection) Id() int64 {

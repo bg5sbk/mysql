@@ -59,4 +59,20 @@ extern OUR_ROW our_fetch_next(OUR_RES *res);
 // If our_query has results, you must call this before the next invocation.
 extern void our_close_result(OUR_RES *res);
 
+typedef struct our_stmt {
+  MYSQL_STMT    *s;
+  unsigned long param_count;
+} OUR_STMT;
+
+
+extern int our_prepare(OUR_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len);
+
+extern int our_stmt_errno(OUR_STMT *stmt);
+
+extern const char *our_stmt_error(OUR_STMT *stmt);
+
+extern int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds);
+
+extern void our_stmt_close(OUR_STMT *stmt);
+
 #endif

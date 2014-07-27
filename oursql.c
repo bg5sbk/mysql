@@ -138,3 +138,42 @@ void our_close_result(OUR_RES *res) {
 		}
 	}
 }
+
+int our_prepare(OUR_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
+	mysql_thread_init();
+
+	stmt->s = mysql_stmt_init(mysql);
+
+	if (mysql_stmt_prepare(stmt->s, sql_str, sql_len) != 0) {
+		return 1;
+	}
+
+	stmt->param_count = mysql_stmt_param_count(stmt->s);
+
+	return 0;
+}
+
+int our_stmt_errno(OUR_STMT *stmt) {
+	mysql_thread_init();
+	return mysql_stmt_errno(stmt->s);
+}
+
+const char *our_stmt_error(OUR_STMT *stmt) {
+  mysql_thread_init();
+  return mysql_stmt_error(stmt->s);
+}
+
+int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds) {
+	mysql_thread_init();
+
+	if (mysql_stmt_bind_param(stmt->s, binds) != 0) {
+		return 1;
+	}
+
+	return mysql_stmt_execute(stmt->s);
+}
+
+void our_stmt_close(OUR_STMT *stmt) {
+	mysql_thread_init();
+	mysql_stmt_close(stmt->s);
+}

@@ -167,6 +167,19 @@ func Test_QueryReader(t *testing.T) {
 	}
 }
 
+func Test_Prepare(t *testing.T) {
+	conn, err := Connect(TestConnParam)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	_, err = conn.Prepare("INSERT INTO test VALUES(?, ?)")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_Clean(t *testing.T) {
 	conn, err := Connect(TestConnParam)
 	if err != nil {
