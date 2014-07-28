@@ -15,7 +15,6 @@ type Stmt struct {
 	s        C.OUR_STMT
 	sql      string
 	binds    []C.MYSQL_BIND
-	bindRef  []interface{}
 	bind_pos int
 }
 
