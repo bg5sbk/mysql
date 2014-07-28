@@ -1,7 +1,6 @@
 package oursql
 
 import (
-	"bytes"
 	"os"
 	"strconv"
 	"testing"
@@ -112,14 +111,12 @@ func Test_QuerySet(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		v := []byte(strconv.Itoa(i))
-
-		if !bytes.Equal(res.Rows[i][0].Inner, v) {
-			t.Fatalf("id not match: %s", v)
+		if res.Rows[i][0].Int() != int64(i) {
+			t.Fatalf("id not match: %s", res.Rows[i][0].String())
 		}
 
-		if !bytes.Equal(res.Rows[i][1].Inner, v) {
-			t.Fatalf("value not match: %s", v)
+		if res.Rows[i][1].String() != strconv.Itoa(i) {
+			t.Fatalf("id not match: %s", res.Rows[i][1].String())
 		}
 	}
 }
@@ -149,14 +146,12 @@ func Test_QueryReader(t *testing.T) {
 			break
 		}
 
-		v := []byte(strconv.Itoa(i))
-
-		if !bytes.Equal(row[0].Inner, v) {
-			t.Fatalf("id not match: %s", v)
+		if row[0].Int() != int64(i) {
+			t.Fatalf("id not match: %s", row[0].String())
 		}
 
-		if !bytes.Equal(row[1].Inner, v) {
-			t.Fatalf("value not match: %s", v)
+		if row[1].String() != strconv.Itoa(i) {
+			t.Fatalf("id not match: %s", row[1].String())
 		}
 
 		i += 1
@@ -174,7 +169,18 @@ func Test_Prepare(t *testing.T) {
 	}
 	defer conn.Close()
 
-	_, err = conn.Prepare("INSERT INTO test VALUES(?, ?)")
+	var stmt *Stmt
+
+	stmt, err = conn.Prepare("INSERT INTO test VALUES(?, ?)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stmt.Close()
+
+	stmt.BindInt(10)
+	stmt.BindString("10")
+
+	err = stmt.Execute()
 	if err != nil {
 		t.Fatal(err)
 	}

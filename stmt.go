@@ -15,6 +15,7 @@ type Stmt struct {
 	s        C.OUR_STMT
 	sql      string
 	binds    []C.MYSQL_BIND
+	bindRef  []interface{}
 	bind_pos int
 }
 
@@ -35,53 +36,52 @@ func (stmt *Stmt) CleanBind() {
 	stmt.bind_pos = 0
 }
 
-func (stmt *Stmt) BindInt(valuePtr *int32) {
+func (stmt *Stmt) BindInt(value int32) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONG
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
-
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindTinyInt(valuePtr *int8) {
+func (stmt *Stmt) BindTinyInt(value int8) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_TINY
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindSmallInt(valuePtr *int16) {
+func (stmt *Stmt) BindSmallInt(value int16) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_SHORT
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindBigInt(valuePtr *int64) {
+func (stmt *Stmt) BindBigInt(value int64) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONGLONG
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindFloat(valuePtr *float32) {
+func (stmt *Stmt) BindFloat(value float32) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_FLOAT
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindDouble(valuePtr *float64) {
+func (stmt *Stmt) BindDouble(value float64) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_DOUBLE
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(valuePtr)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
+	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) BindString(value string, length int) {
+func (stmt *Stmt) BindString(value string) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_VAR_STRING
 	stmt.binds[stmt.bind_pos].buffer = stringPointer(value)
-	stmt.binds[stmt.bind_pos].buffer_length = (C.ulong)(length)
+	stmt.binds[stmt.bind_pos].buffer_length = (C.ulong)(len(value))
 	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
 	stmt.bind_pos++
 }
