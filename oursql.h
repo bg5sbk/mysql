@@ -6,7 +6,7 @@
 
 typedef enum our_mode {
 	OUR_MODE_NON,
-	OUR_MODE_SET,
+	OUR_MODE_TABLE,
 	OUR_MODE_READER
 } OUR_MODE;
 

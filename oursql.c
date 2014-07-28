@@ -75,7 +75,7 @@ int our_query(MYSQL *mysql, OUR_RES *res, const char *sql_str, unsigned long sql
 	}
 
 	if (mode != OUR_MODE_NON) {
-		if (mode == OUR_MODE_SET) {
+		if (mode == OUR_MODE_TABLE) {
 			res->result = mysql_store_result(mysql);
 		} else {
 			res->result = mysql_use_result(mysql);

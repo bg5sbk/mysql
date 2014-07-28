@@ -92,16 +92,16 @@ func Test_Execute(t *testing.T) {
 	}
 }
 
-func Test_QuerySet(t *testing.T) {
+func Test_QueryTable(t *testing.T) {
 	conn, err := Connect(TestConnParam)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
 
-	var res *DataSet
+	var res *DataTable
 
-	res, err = conn.QuerySet("SELECT * FROM test ORDER BY id ASC", 0, true)
+	res, err = conn.QueryTable("SELECT * FROM test ORDER BY id ASC", 0, true)
 	if err != nil {
 		t.Fatal(err)
 	}

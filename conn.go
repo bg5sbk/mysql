@@ -41,24 +41,32 @@ type Connection struct {
 func Connect(params ConnectionParams) (conn *Connection, err error) {
 	host := C.CString(params.Host)
 	defer cfree(host)
-	port := C.uint(params.Port)
+
 	uname := C.CString(params.Uname)
 	defer cfree(uname)
+
 	pass := C.CString(params.Pass)
 	defer cfree(pass)
+
 	dbname := C.CString(params.DbName)
 	defer cfree(dbname)
+
 	unix_socket := C.CString(params.UnixSocket)
 	defer cfree(unix_socket)
+
 	charset := C.CString(params.Charset)
 	defer cfree(charset)
+
+	port := C.uint(params.Port)
 	flags := C.ulong(params.Flags)
 
 	conn = &Connection{}
+
 	if C.our_connect(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}
+
 	return conn, nil
 }
 
@@ -123,10 +131,10 @@ func (conn *Connection) Execute(sql string) (res *Result, err error) {
 	return res, nil
 }
 
-func (conn *Connection) QuerySet(sql string, maxrows int, wantFields bool) (res *DataSet, err error) {
-	res = &DataSet{}
+func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (res *DataTable, err error) {
+	res = &DataTable{}
 
-	err = conn.query(sql, C.OUR_MODE_SET, &res.queryResult, maxrows, wantFields)
+	err = conn.query(sql, C.OUR_MODE_TABLE, &res.queryResult, maxrows, wantFields)
 	if err != nil {
 		return nil, err
 	}

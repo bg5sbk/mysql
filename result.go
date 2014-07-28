@@ -103,12 +103,12 @@ func (res *queryResult) IndexOf(name string) int {
 	return -1
 }
 
-type DataSet struct {
+type DataTable struct {
 	queryResult
 	Rows [][]Value
 }
 
-func (res *DataSet) fillRows() (err error) {
+func (res *DataTable) fillRows() (err error) {
 	rowCount := int(res.c.affected_rows)
 	if rowCount == 0 {
 		return nil
