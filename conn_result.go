@@ -18,19 +18,27 @@ const (
 // When transmitted over the wire, the Rows all come back as strings
 // and lose their original  use Fields.Type to convert
 // them back if needed, using the following functions.
-type Result struct {
+type connResult struct {
 	c            C.OUR_RES
 	conn         *Connection
-	RowsAffected uint64
-	InsertId     uint64
+	rowsAffected uint64
+	insertId     uint64
 }
 
-type queryResult struct {
-	Result
-	Fields []Field
+func (res *connResult) RowsAffected() uint64 {
+	return res.rowsAffected
 }
 
-func (res *queryResult) fillFields() {
+func (res *connResult) InsertId() uint64 {
+	return res.insertId
+}
+
+type connQueryResult struct {
+	connResult
+	fields []Field
+}
+
+func (res *connQueryResult) fillFields() {
 	nfields := int(res.c.num_fields)
 	if nfields == 0 {
 		return
@@ -50,10 +58,10 @@ func (res *queryResult) fillFields() {
 		fields[i].Type = TypeCode(cfields[i]._type)
 	}
 
-	res.Fields = fields
+	res.fields = fields
 }
 
-func (res *queryResult) fetchNext() (row []Value, err error) {
+func (res *connQueryResult) fetchNext() (row []Value, err error) {
 	crow := C.our_fetch_next(&res.c)
 	if crow.has_error != 0 {
 		return nil, res.conn.lastError("")
@@ -90,12 +98,16 @@ func (res *queryResult) fetchNext() (row []Value, err error) {
 	return row, nil
 }
 
-func (res *queryResult) close() {
+func (res *connQueryResult) close() {
 	C.our_close_result(&res.c)
 }
 
-func (res *queryResult) IndexOf(name string) int {
-	for i, field := range res.Fields {
+func (res *connQueryResult) Fields() []Field {
+	return res.fields
+}
+
+func (res *connQueryResult) IndexOf(name string) int {
+	for i, field := range res.fields {
 		if field.Name == name {
 			return i
 		}
@@ -103,12 +115,12 @@ func (res *queryResult) IndexOf(name string) int {
 	return -1
 }
 
-type DataTable struct {
-	queryResult
-	Rows [][]Value
+type connDataTable struct {
+	connQueryResult
+	rows [][]Value
 }
 
-func (res *DataTable) fillRows() (err error) {
+func (res *connDataTable) fillRows() (err error) {
 	rowCount := int(res.c.affected_rows)
 	if rowCount == 0 {
 		return nil
@@ -126,19 +138,23 @@ func (res *DataTable) fillRows() (err error) {
 		}
 	}
 
-	res.Rows = rows
+	res.rows = rows
 
 	return nil
 }
 
-type DataReader struct {
-	queryResult
+func (res *connDataTable) Rows() [][]Value {
+	return res.rows
 }
 
-func (res *DataReader) FetchNext() ([]Value, error) {
+type connDataReader struct {
+	connQueryResult
+}
+
+func (res *connDataReader) FetchNext() ([]Value, error) {
 	return res.fetchNext()
 }
 
-func (res *DataReader) Close() {
+func (res *connDataReader) Close() {
 	res.close()
 }

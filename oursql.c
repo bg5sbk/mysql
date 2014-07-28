@@ -170,7 +170,14 @@ int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds) {
 		return 1;
 	}
 
-	return mysql_stmt_execute(stmt->s);
+	if (mysql_stmt_execute(stmt->s) != 0) {
+		return 1;
+	}
+
+	stmt->affected_rows = mysql_stmt_affected_rows(stmt->s);
+	stmt->insert_id = mysql_stmt_insert_id(stmt->s);
+
+	return 0;
 }
 
 void our_stmt_close(OUR_STMT *stmt) {

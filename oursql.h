@@ -60,8 +60,10 @@ extern OUR_ROW our_fetch_next(OUR_RES *res);
 extern void our_close_result(OUR_RES *res);
 
 typedef struct our_stmt {
-  MYSQL_STMT    *s;
-  unsigned long param_count;
+	MYSQL_STMT    *s;
+	unsigned long param_count;
+	my_ulonglong  affected_rows;
+	my_ulonglong  insert_id;
 } OUR_STMT;
 
 

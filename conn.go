@@ -83,7 +83,7 @@ func (conn *Connection) IsClosed() bool {
 	return conn.closed
 }
 
-func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *Result) error {
+func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *connResult) error {
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
@@ -93,14 +93,14 @@ func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *Result) error 
 	}
 
 	res.conn = conn
-	res.RowsAffected = uint64(conn.c.affected_rows)
-	res.InsertId = uint64(conn.c.insert_id)
+	res.rowsAffected = uint64(conn.c.affected_rows)
+	res.insertId = uint64(conn.c.insert_id)
 
 	return nil
 }
 
-func (conn *Connection) query(sql string, mode C.OUR_MODE, res *queryResult, maxrows int, wantFields bool) error {
-	err := conn.execute(sql, mode, &res.Result)
+func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult, maxrows int, wantFields bool) error {
+	err := conn.execute(sql, mode, &res.connResult)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (conn *Connection) query(sql string, mode C.OUR_MODE, res *queryResult, max
 		return nil
 	}
 
-	if maxrows > 0 && res.RowsAffected > uint64(maxrows) {
+	if maxrows > 0 && res.rowsAffected > uint64(maxrows) {
 		return &SqlError{0, fmt.Sprintf("Row count exceeded %d", maxrows), string(sql)}
 	}
 
@@ -120,10 +120,10 @@ func (conn *Connection) query(sql string, mode C.OUR_MODE, res *queryResult, max
 	return nil
 }
 
-func (conn *Connection) Execute(sql string) (res *Result, err error) {
-	res = &Result{}
+func (conn *Connection) Execute(sql string) (Result, error) {
+	res := &connResult{}
 
-	err = conn.execute(sql, C.OUR_MODE_NON, res)
+	err := conn.execute(sql, C.OUR_MODE_NON, res)
 	if err != nil {
 		return nil, err
 	}
@@ -131,10 +131,10 @@ func (conn *Connection) Execute(sql string) (res *Result, err error) {
 	return res, nil
 }
 
-func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (res *DataTable, err error) {
-	res = &DataTable{}
+func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (DataTable, error) {
+	res := &connDataTable{}
 
-	err = conn.query(sql, C.OUR_MODE_TABLE, &res.queryResult, maxrows, wantFields)
+	err := conn.query(sql, C.OUR_MODE_TABLE, &res.connQueryResult, maxrows, wantFields)
 	if err != nil {
 		return nil, err
 	}
@@ -148,10 +148,10 @@ func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (re
 	return res, nil
 }
 
-func (conn *Connection) QueryReader(sql string, maxrows int, wantFields bool) (res *DataReader, err error) {
-	res = &DataReader{}
+func (conn *Connection) QueryReader(sql string, maxrows int, wantFields bool) (DataReader, error) {
+	res := &connDataReader{}
 
-	err = conn.query(sql, C.OUR_MODE_READER, &res.queryResult, maxrows, wantFields)
+	err := conn.query(sql, C.OUR_MODE_READER, &res.connQueryResult, maxrows, wantFields)
 	if err != nil {
 		return nil, err
 	}

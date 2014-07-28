@@ -85,9 +85,14 @@ func Test_Execute(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		_, err = conn.Execute("INSERT INTO test VALUES(" + strconv.Itoa(i) + ",'" + strconv.Itoa(i) + "')")
+		res, err := conn.Execute("INSERT INTO test VALUES(" + strconv.Itoa(i) + ",'" + strconv.Itoa(i) + "')")
+
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		if res.RowsAffected() != 1 {
+			t.Fatal(res.RowsAffected() != 1)
 		}
 	}
 }
@@ -99,24 +104,26 @@ func Test_QueryTable(t *testing.T) {
 	}
 	defer conn.Close()
 
-	var res *DataTable
+	var res DataTable
 
 	res, err = conn.QueryTable("SELECT * FROM test ORDER BY id ASC", 0, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(res.Rows) != 10 {
-		t.Fatalf("len(res.Rows) != 10, %d", len(res.Rows))
+	rows := res.Rows()
+
+	if len(rows) != 10 {
+		t.Fatalf("len(rows) != 10, %d", len(rows))
 	}
 
 	for i := 0; i < 10; i++ {
-		if res.Rows[i][0].Int() != int64(i) {
-			t.Fatalf("id not match: %s", res.Rows[i][0].String())
+		if rows[i][0].Int() != int64(i) {
+			t.Fatalf("id not match: %s", rows[i][0].String())
 		}
 
-		if res.Rows[i][1].String() != strconv.Itoa(i) {
-			t.Fatalf("id not match: %s", res.Rows[i][1].String())
+		if rows[i][1].String() != strconv.Itoa(i) {
+			t.Fatalf("id not match: %s", rows[i][1].String())
 		}
 	}
 }
@@ -128,12 +135,13 @@ func Test_QueryReader(t *testing.T) {
 	}
 	defer conn.Close()
 
-	var res *DataReader
+	var res DataReader
 
 	res, err = conn.QueryReader("SELECT * FROM test ORDER BY id ASC", 0, true)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer res.Close()
 
 	i := 0
 	for {

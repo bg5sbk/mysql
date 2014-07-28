@@ -66,3 +66,20 @@ func (v *Value) Float() float64 {
 func (v *Value) String() string {
 	return string(v.Inner)
 }
+
+type Result interface {
+	RowsAffected() uint64
+	InsertId() uint64
+}
+
+type DataTable interface {
+	Fields() []Field
+	Rows() [][]Value
+	IndexOf(string) int
+}
+
+type DataReader interface {
+	Fields() []Field
+	FetchNext() ([]Value, error)
+	Close()
+}

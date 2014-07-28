@@ -12,6 +12,7 @@ var (
 )
 
 type Stmt struct {
+	conn     *Connection
 	s        C.OUR_STMT
 	sql      string
 	binds    []C.MYSQL_BIND
@@ -20,6 +21,7 @@ type Stmt struct {
 
 func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt := &Stmt{}
+	stmt.conn = conn
 	stmt.sql = sql
 
 	if C.our_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
@@ -102,9 +104,14 @@ func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) 
 }
 
 func (stmt *Stmt) Execute() error {
+	if stmt.conn.IsClosed() {
+		return &SqlError{Num: 2006, Message: "Connection is closed"}
+	}
+
 	if C.our_stmt_execute(&stmt.s, &stmt.binds[0]) != 0 {
 		return stmt.lastError()
 	}
+
 	return nil
 }
 
