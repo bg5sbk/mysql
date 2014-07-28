@@ -72,14 +72,19 @@ type Result interface {
 	InsertId() uint64
 }
 
-type DataTable interface {
+type QueryResult interface {
+	Result
 	Fields() []Field
-	Rows() [][]Value
 	IndexOf(string) int
 }
 
+type DataTable interface {
+	QueryResult
+	Rows() [][]Value
+}
+
 type DataReader interface {
-	Fields() []Field
+	QueryResult
 	FetchNext() ([]Value, error)
 	Close()
 }
