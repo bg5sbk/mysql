@@ -62,9 +62,14 @@ extern void our_close_result(OUR_RES *res);
 typedef struct our_stmt {
 	MYSQL_STMT    *s;
 	unsigned long param_count;
-	my_ulonglong  affected_rows;
-	my_ulonglong  insert_id;
 } OUR_STMT;
+
+typedef struct our_stmt_res {
+	MYSQL        *mysql;
+	MYSQL_STMT   *stmt;
+	my_ulonglong affected_rows;
+	my_ulonglong insert_id;
+} OUR_STMT_RES;
 
 
 extern int our_prepare(OUR_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len);
@@ -73,7 +78,7 @@ extern int our_stmt_errno(OUR_STMT *stmt);
 
 extern const char *our_stmt_error(OUR_STMT *stmt);
 
-extern int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds);
+extern int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds, OUR_STMT_RES *res);
 
 extern void our_stmt_close(OUR_STMT *stmt);
 

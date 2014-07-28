@@ -35,6 +35,28 @@ const (
 	MYSQL_TYPE_NULL       = TypeCode(C.MYSQL_TYPE_NULL)       // NULL-type field
 )
 
+type Result interface {
+	RowsAffected() uint64
+	InsertId() uint64
+}
+
+type QueryResult interface {
+	Result
+	Fields() []Field
+	IndexOf(string) int
+}
+
+type DataTable interface {
+	QueryResult
+	Rows() [][]Value
+}
+
+type DataReader interface {
+	QueryResult
+	FetchNext() ([]Value, error)
+	Close()
+}
+
 // Field described a column returned by mysql
 type Field struct {
 	Name string
@@ -65,26 +87,4 @@ func (v *Value) Float() float64 {
 
 func (v *Value) String() string {
 	return string(v.Inner)
-}
-
-type Result interface {
-	RowsAffected() uint64
-	InsertId() uint64
-}
-
-type QueryResult interface {
-	Result
-	Fields() []Field
-	IndexOf(string) int
-}
-
-type DataTable interface {
-	QueryResult
-	Rows() [][]Value
-}
-
-type DataReader interface {
-	QueryResult
-	FetchNext() ([]Value, error)
-	Close()
 }

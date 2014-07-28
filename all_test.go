@@ -188,9 +188,15 @@ func Test_Prepare(t *testing.T) {
 	stmt.BindInt(10)
 	stmt.BindString("10")
 
-	err = stmt.Execute()
+	var res Result
+
+	res, err = stmt.Execute()
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if res.RowsAffected() != 1 {
+		t.Fatal(res.RowsAffected() != 1)
 	}
 }
 

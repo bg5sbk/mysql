@@ -19,22 +19,20 @@ const (
 // and lose their original  use Fields.Type to convert
 // them back if needed, using the following functions.
 type connResult struct {
-	c            C.OUR_RES
-	conn         *Connection
-	rowsAffected uint64
-	insertId     uint64
+	c C.OUR_RES
 }
 
 func (res *connResult) RowsAffected() uint64 {
-	return res.rowsAffected
+	return uint64(res.c.affected_rows)
 }
 
 func (res *connResult) InsertId() uint64 {
-	return res.insertId
+	return uint64(res.c.insert_id)
 }
 
 type connQueryResult struct {
 	connResult
+	conn   *Connection
 	fields []Field
 }
 
@@ -120,14 +118,14 @@ type connDataTable struct {
 	rows [][]Value
 }
 
-func (res *connDataTable) fillRows() (err error) {
+func (res *connDataTable) fillRows(conn *Connection) (err error) {
 	rowCount := int(res.c.affected_rows)
 	if rowCount == 0 {
 		return nil
 	}
 
 	if rowCount < 0 {
-		return res.conn.lastError("")
+		return conn.lastError("")
 	}
 
 	rows := make([][]Value, rowCount)

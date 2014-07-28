@@ -92,10 +92,6 @@ func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *connResult) er
 		return conn.lastError(sql)
 	}
 
-	res.conn = conn
-	res.rowsAffected = uint64(conn.c.affected_rows)
-	res.insertId = uint64(conn.c.insert_id)
-
 	return nil
 }
 
@@ -109,7 +105,7 @@ func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult,
 		return nil
 	}
 
-	if maxrows > 0 && res.rowsAffected > uint64(maxrows) {
+	if maxrows > 0 && res.RowsAffected() > uint64(maxrows) {
 		return &SqlError{0, fmt.Sprintf("Row count exceeded %d", maxrows), string(sql)}
 	}
 
@@ -140,7 +136,7 @@ func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (Da
 	}
 	defer res.close()
 
-	err = res.fillRows()
+	err = res.fillRows(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +151,7 @@ func (conn *Connection) QueryReader(sql string, maxrows int, wantFields bool) (D
 	if err != nil {
 		return nil, err
 	}
+	res.conn = conn
 
 	return res, nil
 }

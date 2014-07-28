@@ -163,7 +163,7 @@ const char *our_stmt_error(OUR_STMT *stmt) {
   return mysql_stmt_error(stmt->s);
 }
 
-int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds) {
+int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds, OUR_STMT_RES *res) {
 	mysql_thread_init();
 
 	if (mysql_stmt_bind_param(stmt->s, binds) != 0) {
@@ -174,8 +174,9 @@ int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds) {
 		return 1;
 	}
 
-	stmt->affected_rows = mysql_stmt_affected_rows(stmt->s);
-	stmt->insert_id = mysql_stmt_insert_id(stmt->s);
+	res->stmt = stmt->s;
+	res->affected_rows = mysql_stmt_affected_rows(stmt->s);
+	res->insert_id = mysql_stmt_insert_id(stmt->s);
 
 	return 0;
 }

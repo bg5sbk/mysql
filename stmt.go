@@ -103,16 +103,18 @@ func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) 
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) Execute() error {
+func (stmt *Stmt) Execute() (Result, error) {
 	if stmt.conn.IsClosed() {
-		return &SqlError{Num: 2006, Message: "Connection is closed"}
+		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
-	if C.our_stmt_execute(&stmt.s, &stmt.binds[0]) != 0 {
-		return stmt.lastError()
+	res := &stmtResult{}
+
+	if C.our_stmt_execute(&stmt.s, &stmt.binds[0], &res.c) != 0 {
+		return nil, stmt.lastError()
 	}
 
-	return nil
+	return res, nil
 }
 
 func (stmt *Stmt) Close() {
