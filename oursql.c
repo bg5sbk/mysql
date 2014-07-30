@@ -348,5 +348,6 @@ OUR_ROW our_stmt_fetch_next(OUR_STMT_RES *res) {
 }
 
 void our_stmt_close_result(OUR_STMT_RES *res) {
+	mysql_thread_init();
 	mysql_stmt_free_result(res->stmt->s);
 }
