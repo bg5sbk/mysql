@@ -36,13 +36,13 @@ type connQueryResult struct {
 	fields []Field
 }
 
-func (res *connQueryResult) fillFields() {
-	nfields := int(res.c.num_fields)
+func fetchFields(c C.OUR_RES_META) []Field {
+	nfields := int(c.num_fields)
 	if nfields == 0 {
-		return
+		return nil
 	}
 
-	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(res.c.fields))
+	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(c.fields))
 	totalLength := uint64(0)
 	for i := 0; i < nfields; i++ {
 		totalLength += uint64(cfields[i].name_length)
@@ -56,23 +56,18 @@ func (res *connQueryResult) fillFields() {
 		fields[i].Type = TypeCode(cfields[i]._type)
 	}
 
-	res.fields = fields
+	return fields
 }
 
-func (res *connQueryResult) fetchNext() (row []Value, err error) {
-	crow := C.our_fetch_next(&res.c)
-	if crow.has_error != 0 {
-		return nil, res.conn.lastError("")
-	}
-
+func fetchNext(c C.OUR_RES_META, crow C.OUR_ROW, isStmt bool) (row []Value, err error) {
 	rowPtr := (*[maxSize]*[maxSize]byte)(unsafe.Pointer(crow.mysql_row))
 	if rowPtr == nil {
 		return nil, nil
 	}
 
-	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(res.c.fields))
+	cfields := (*[maxSize]C.MYSQL_FIELD)(unsafe.Pointer(c.fields))
 
-	colCount := int(res.c.num_fields)
+	colCount := int(c.num_fields)
 	row = make([]Value, colCount)
 
 	lengths := (*[maxSize]uint64)(unsafe.Pointer(crow.lengths))
@@ -90,10 +85,23 @@ func (res *connQueryResult) fetchNext() (row []Value, err error) {
 		}
 		start := len(arena)
 		arena = append(arena, colPtr[:colLength]...)
-		row[i] = Value{TypeCode(cfields[i]._type), arena[start : start+int(colLength)]}
+		row[i] = Value{isStmt, TypeCode(cfields[i]._type), arena[start : start+int(colLength)]}
 	}
 
 	return row, nil
+}
+
+func (res *connQueryResult) fillFields() {
+	res.fields = fetchFields(res.c.meta)
+}
+
+func (res *connQueryResult) fetchNext() (row []Value, err error) {
+	crow := C.our_fetch_next(&res.c)
+	if crow.has_error != 0 {
+		return nil, res.conn.lastError("")
+	}
+
+	return fetchNext(res.c.meta, crow, false)
 }
 
 func (res *connQueryResult) close() {

@@ -4,7 +4,9 @@ package oursql
 #include "oursql.h"
 */
 import "C"
-import "strconv"
+import (
+	"strconv"
+)
 
 var NULL = Value{}
 
@@ -65,11 +67,30 @@ type Field struct {
 
 // Value can store any SQL value. NULL is stored as nil.
 type Value struct {
-	Type  TypeCode
-	Inner []byte
+	isStmtValue bool
+	Type        TypeCode
+	Inner       []byte
 }
 
 func (v *Value) Int() int64 {
+	if v.isStmtValue {
+		switch v.Type {
+		case MYSQL_TYPE_TINY:
+			return int64(*(*int8)(bytePointer(v.Inner)))
+		case MYSQL_TYPE_YEAR:
+			fallthrough
+		case MYSQL_TYPE_SHORT:
+			return int64(*(*int16)(bytePointer(v.Inner)))
+		case MYSQL_TYPE_INT24:
+			fallthrough
+		case MYSQL_TYPE_LONG:
+			return int64(*(*int32)(bytePointer(v.Inner)))
+		case MYSQL_TYPE_LONGLONG:
+			return *(*int64)(bytePointer(v.Inner))
+		default:
+			panic("the value is not integer type")
+		}
+	}
 	r, err := strconv.ParseInt(string(v.Inner), 0, 64)
 	if err != nil {
 		panic(err)
@@ -78,6 +99,16 @@ func (v *Value) Int() int64 {
 }
 
 func (v *Value) Float() float64 {
+	if v.isStmtValue {
+		switch v.Type {
+		case MYSQL_TYPE_FLOAT:
+			return float64(*(*float32)(bytePointer(v.Inner)))
+		case MYSQL_TYPE_DOUBLE:
+			return *(*float64)(bytePointer(v.Inner))
+		default:
+			panic("the value is not float type")
+		}
+	}
 	r, err := strconv.ParseFloat(string(v.Inner), 64)
 	if err != nil {
 		panic(err)

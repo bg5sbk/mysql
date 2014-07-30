@@ -5,7 +5,6 @@ package oursql
 */
 import "C"
 import (
-	"fmt"
 	"unsafe"
 )
 
@@ -95,23 +94,13 @@ func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *connResult) er
 	return nil
 }
 
-func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult, maxrows int, wantFields bool) error {
+func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult) error {
 	err := conn.execute(sql, mode, &res.connResult)
 	if err != nil {
 		return err
 	}
 
-	if res.c.num_fields == 0 {
-		return nil
-	}
-
-	if maxrows > 0 && res.RowsAffected() > uint64(maxrows) {
-		return &SqlError{0, fmt.Sprintf("Row count exceeded %d", maxrows), string(sql)}
-	}
-
-	if wantFields {
-		res.fillFields()
-	}
+	res.fillFields()
 
 	return nil
 }
@@ -119,7 +108,7 @@ func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult,
 func (conn *Connection) Execute(sql string) (Result, error) {
 	res := &connResult{}
 
-	err := conn.execute(sql, C.OUR_MODE_NON, res)
+	err := conn.execute(sql, C.OUR_MODE_NONE, res)
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +116,10 @@ func (conn *Connection) Execute(sql string) (Result, error) {
 	return res, nil
 }
 
-func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (DataTable, error) {
+func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 	res := &connDataTable{}
 
-	err := conn.query(sql, C.OUR_MODE_TABLE, &res.connQueryResult, maxrows, wantFields)
+	err := conn.query(sql, C.OUR_MODE_TABLE, &res.connQueryResult)
 	if err != nil {
 		return nil, err
 	}
@@ -144,10 +133,10 @@ func (conn *Connection) QueryTable(sql string, maxrows int, wantFields bool) (Da
 	return res, nil
 }
 
-func (conn *Connection) QueryReader(sql string, maxrows int, wantFields bool) (DataReader, error) {
+func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	res := &connDataReader{}
 
-	err := conn.query(sql, C.OUR_MODE_READER, &res.connQueryResult, maxrows, wantFields)
+	err := conn.query(sql, C.OUR_MODE_READER, &res.connQueryResult)
 	if err != nil {
 		return nil, err
 	}

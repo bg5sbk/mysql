@@ -5,7 +5,7 @@
 #include <mysql.h>
 
 typedef enum our_mode {
-	OUR_MODE_NON,
+	OUR_MODE_NONE,
 	OUR_MODE_TABLE,
 	OUR_MODE_READER
 } OUR_MODE;
@@ -35,12 +35,16 @@ extern unsigned long our_thread_id(MYSQL *mysql);
 extern unsigned int our_errno(MYSQL *mysql);
 extern const char *our_error(MYSQL *mysql);
 
+typedef struct our_res_meta {
+	unsigned int num_fields;
+	MYSQL_FIELD  *fields;
+} OUR_RES_META;
+
 typedef struct our_res {
 	MYSQL        *mysql;
 	my_ulonglong affected_rows;
 	my_ulonglong insert_id;
-	unsigned int num_fields;
-	MYSQL_FIELD  *fields;
+	OUR_RES_META meta;
 	MYSQL_RES    *result;
 } OUR_RES;
 
@@ -48,6 +52,7 @@ typedef struct our_row {
 	int           has_error;
 	MYSQL_ROW     mysql_row;
 	unsigned long *lengths;
+	my_bool       *is_nulls;
 } OUR_ROW;
 
 // stream!=0 uses streaming (use_result). Otherwise it prefetches (store_result).
@@ -62,11 +67,17 @@ extern void our_close_result(OUR_RES *res);
 typedef struct our_stmt {
 	MYSQL_STMT    *s;
 	unsigned long param_count;
+	OUR_RES_META  meta;
+	my_bool       meta_init;
+	char          **row_cache;
+	size_t        *row_cache_len;
+	MYSQL_BIND    *outputs;
+	unsigned long *output_lengths;
 } OUR_STMT;
 
 typedef struct our_stmt_res {
 	MYSQL        *mysql;
-	MYSQL_STMT   *stmt;
+	OUR_STMT     *stmt;
 	my_ulonglong affected_rows;
 	my_ulonglong insert_id;
 } OUR_STMT_RES;
@@ -78,8 +89,12 @@ extern int our_stmt_errno(OUR_STMT *stmt);
 
 extern const char *our_stmt_error(OUR_STMT *stmt);
 
-extern int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds, OUR_STMT_RES *res);
+extern int our_stmt_execute(OUR_STMT *stmt, MYSQL_BIND *binds, OUR_STMT_RES *res, OUR_MODE mode);
 
 extern void our_stmt_close(OUR_STMT *stmt);
+
+extern OUR_ROW our_stmt_fetch_next(OUR_STMT_RES *res);
+
+extern void our_stmt_close_result(OUR_STMT_RES *res);
 
 #endif

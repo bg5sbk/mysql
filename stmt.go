@@ -108,11 +108,70 @@ func (stmt *Stmt) Execute() (Result, error) {
 		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
+	var bind *C.MYSQL_BIND
+
+	if len(stmt.binds) > 0 {
+		bind = &stmt.binds[0]
+	}
+
 	res := &stmtResult{}
 
-	if C.our_stmt_execute(&stmt.s, &stmt.binds[0], &res.c) != 0 {
+	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_NONE) != 0 {
 		return nil, stmt.lastError()
 	}
+
+	return res, nil
+}
+
+func (stmt *Stmt) QueryTable() (DataTable, error) {
+	if stmt.conn.IsClosed() {
+		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
+	}
+
+	var bind *C.MYSQL_BIND
+
+	if len(stmt.binds) > 0 {
+		bind = &stmt.binds[0]
+	}
+
+	res := &stmtDataTable{}
+
+	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_TABLE) != 0 {
+		return nil, stmt.lastError()
+	}
+	defer res.close()
+
+	res.stmt = stmt
+
+	res.fillFields()
+
+	if err := res.fillRows(stmt); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (stmt *Stmt) QueryReader() (DataReader, error) {
+	if stmt.conn.IsClosed() {
+		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
+	}
+
+	var bind *C.MYSQL_BIND
+
+	if len(stmt.binds) > 0 {
+		bind = &stmt.binds[0]
+	}
+
+	res := &stmtDataReader{}
+
+	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_READER) != 0 {
+		return nil, stmt.lastError()
+	}
+
+	res.stmt = stmt
+
+	res.fillFields()
 
 	return res, nil
 }

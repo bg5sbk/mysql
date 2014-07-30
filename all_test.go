@@ -106,7 +106,7 @@ func Test_QueryTable(t *testing.T) {
 
 	var res DataTable
 
-	res, err = conn.QueryTable("SELECT * FROM test ORDER BY id ASC", 0, true)
+	res, err = conn.QueryTable("SELECT * FROM test ORDER BY id ASC")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +137,7 @@ func Test_QueryReader(t *testing.T) {
 
 	var res DataReader
 
-	res, err = conn.QueryReader("SELECT * FROM test ORDER BY id ASC", 0, true)
+	res, err = conn.QueryReader("SELECT * FROM test ORDER BY id ASC")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,27 +177,85 @@ func Test_Prepare(t *testing.T) {
 	}
 	defer conn.Close()
 
-	var stmt *Stmt
+	var (
+		stmt   *Stmt
+		res    Result
+		table  DataTable
+		reader DataReader
+	)
+
+	stmt, err = conn.Prepare("SELECT * FROM test ORDER BY id ASC")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	table, err = stmt.QueryTable()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rows := table.Rows()
+
+	if len(rows) != 10 {
+		t.Fatalf("len(rows) != 10, %d", len(rows))
+	}
+
+	for i := 0; i < 10; i++ {
+		if rows[i][0].Int() != int64(i) {
+			t.Fatalf("id not match: %d", rows[i][0].Int())
+		}
+
+		if rows[i][1].String() != strconv.Itoa(i) {
+			t.Fatalf("value not match: %s", rows[i][1].String())
+		}
+	}
+
+	reader, err = stmt.QueryReader()
+
+	i := 0
+	for {
+		row, err1 := reader.FetchNext()
+		if err1 != nil {
+			t.Fatal(err1)
+		}
+
+		if row == nil {
+			break
+		}
+
+		if row[0].Int() != int64(i) {
+			t.Fatalf("id not match: %s", row[0].String())
+		}
+
+		if row[1].String() != strconv.Itoa(i) {
+			t.Fatalf("id not match: %s", row[1].String())
+		}
+
+		i += 1
+	}
+
+	if i != 10 {
+		t.Fatal("row number not match")
+	}
+
+	stmt.Close()
 
 	stmt, err = conn.Prepare("INSERT INTO test VALUES(?, ?)")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer stmt.Close()
-
 	stmt.BindInt(10)
 	stmt.BindString("10")
-
-	var res Result
 
 	res, err = stmt.Execute()
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if res.RowsAffected() != 1 {
 		t.Fatal(res.RowsAffected() != 1)
 	}
+
+	stmt.Close()
 }
 
 func Test_Clean(t *testing.T) {
