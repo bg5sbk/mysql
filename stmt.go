@@ -103,47 +103,49 @@ func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) 
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) Execute() (Result, error) {
+func (stmt *Stmt) execute(res *stmtResult, mode C.OUR_MODE) error {
 	if stmt.conn.IsClosed() {
-		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
+		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
 	var bind *C.MYSQL_BIND
-
 	if len(stmt.binds) > 0 {
 		bind = &stmt.binds[0]
 	}
 
+	if C.our_stmt_execute(&stmt.s, bind, &res.c, mode) != 0 {
+		return stmt.lastError()
+	}
+
+	return nil
+}
+
+func (stmt *Stmt) query(res *stmtQueryResult, mode C.OUR_MODE) error {
+	if err := stmt.execute(&res.stmtResult, mode); err != nil {
+		return err
+	}
+	res.stmt = stmt
+	res.fillFields()
+	return nil
+}
+
+func (stmt *Stmt) Execute() (Result, error) {
 	res := &stmtResult{}
 
-	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_NONE) != 0 {
-		return nil, stmt.lastError()
+	if err := stmt.execute(res, C.OUR_MODE_NONE); err != nil {
+		return nil, err
 	}
 
 	return res, nil
 }
 
 func (stmt *Stmt) QueryTable() (DataTable, error) {
-	if stmt.conn.IsClosed() {
-		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
-	}
-
-	var bind *C.MYSQL_BIND
-
-	if len(stmt.binds) > 0 {
-		bind = &stmt.binds[0]
-	}
-
 	res := &stmtDataTable{}
 
-	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_TABLE) != 0 {
-		return nil, stmt.lastError()
+	if err := stmt.query(&res.stmtQueryResult, C.OUR_MODE_TABLE); err != nil {
+		return nil, err
 	}
 	defer res.close()
-
-	res.stmt = stmt
-
-	res.fillFields()
 
 	if err := res.fillRows(stmt); err != nil {
 		return nil, err
@@ -153,25 +155,11 @@ func (stmt *Stmt) QueryTable() (DataTable, error) {
 }
 
 func (stmt *Stmt) QueryReader() (DataReader, error) {
-	if stmt.conn.IsClosed() {
-		return nil, &SqlError{Num: 2006, Message: "Connection is closed"}
-	}
-
-	var bind *C.MYSQL_BIND
-
-	if len(stmt.binds) > 0 {
-		bind = &stmt.binds[0]
-	}
-
 	res := &stmtDataReader{}
 
-	if C.our_stmt_execute(&stmt.s, bind, &res.c, C.OUR_MODE_READER) != 0 {
-		return nil, stmt.lastError()
+	if err := stmt.query(&res.stmtQueryResult, C.OUR_MODE_READER); err != nil {
+		return nil, err
 	}
-
-	res.stmt = stmt
-
-	res.fillFields()
 
 	return res, nil
 }

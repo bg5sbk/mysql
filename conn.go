@@ -82,7 +82,7 @@ func (conn *Connection) IsClosed() bool {
 	return conn.closed
 }
 
-func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *connResult) error {
+func (conn *Connection) execute(sql string, res *connResult, mode C.OUR_MODE) error {
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
@@ -94,12 +94,13 @@ func (conn *Connection) execute(sql string, mode C.OUR_MODE, res *connResult) er
 	return nil
 }
 
-func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult) error {
-	err := conn.execute(sql, mode, &res.connResult)
+func (conn *Connection) query(sql string, res *connQueryResult, mode C.OUR_MODE) error {
+	err := conn.execute(sql, &res.connResult, mode)
 	if err != nil {
 		return err
 	}
 
+	res.conn = conn
 	res.fillFields()
 
 	return nil
@@ -108,7 +109,7 @@ func (conn *Connection) query(sql string, mode C.OUR_MODE, res *connQueryResult)
 func (conn *Connection) Execute(sql string) (Result, error) {
 	res := &connResult{}
 
-	err := conn.execute(sql, C.OUR_MODE_NONE, res)
+	err := conn.execute(sql, res, C.OUR_MODE_NONE)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (conn *Connection) Execute(sql string) (Result, error) {
 func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 	res := &connDataTable{}
 
-	err := conn.query(sql, C.OUR_MODE_TABLE, &res.connQueryResult)
+	err := conn.query(sql, &res.connQueryResult, C.OUR_MODE_TABLE)
 	if err != nil {
 		return nil, err
 	}
@@ -136,11 +137,10 @@ func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	res := &connDataReader{}
 
-	err := conn.query(sql, C.OUR_MODE_READER, &res.connQueryResult)
+	err := conn.query(sql, &res.connQueryResult, C.OUR_MODE_READER)
 	if err != nil {
 		return nil, err
 	}
-	res.conn = conn
 
 	return res, nil
 }

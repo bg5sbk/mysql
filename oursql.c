@@ -313,6 +313,8 @@ OUR_ROW our_stmt_fetch_next(OUR_STMT_RES *res) {
 
 		switch (stmt->meta.fields[i].type) {
 			case MYSQL_TYPE_DECIMAL:     // DECIMAL
+			case MYSQL_TYPE_NEWDATE:     // MYSQL_TYPE_NEWDATE
+			case MYSQL_TYPE_NEWDECIMAL:  // DECIMAL
 			case MYSQL_TYPE_STRING:      // CHAR, BINARY
 			case MYSQL_TYPE_VAR_STRING:  // VARCHAR, VARBINARY
 			case MYSQL_TYPE_TINY_BLOB:   // TINYBLOB, TINYTEXT
