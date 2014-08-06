@@ -1,4 +1,4 @@
-package oursql
+package mysql
 
 import (
 	"os"
@@ -24,7 +24,7 @@ func init() {
 	if os.Getenv("TEST_MYSQL_DBNAME") != "" {
 		TestConnParam.DbName = os.Getenv("TEST_MYSQL_DBNAME")
 	} else {
-		TestConnParam.DbName = "oursql_test"
+		TestConnParam.DbName = "mysql_test"
 	}
 
 	if os.Getenv("TEST_MYSQL_UNAME") != "" {

@@ -1,7 +1,7 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 import (
@@ -10,7 +10,7 @@ import (
 
 func init() {
 	// This needs to be called before threads begin to spawn.
-	C.our_library_init()
+	C.my_library_init()
 }
 
 type ConnectionParams struct {
@@ -61,7 +61,7 @@ func Connect(params ConnectionParams) (conn *Connection, err error) {
 
 	conn = &Connection{}
 
-	if C.our_connect(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
+	if C.my_connect(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}
@@ -70,11 +70,11 @@ func Connect(params ConnectionParams) (conn *Connection, err error) {
 }
 
 func (conn *Connection) Id() int64 {
-	return int64(C.our_thread_id(&conn.c))
+	return int64(C.my_thread_id(&conn.c))
 }
 
 func (conn *Connection) Close() {
-	C.our_close(&conn.c)
+	C.my_close(&conn.c)
 	conn.closed = true
 }
 
@@ -82,19 +82,19 @@ func (conn *Connection) IsClosed() bool {
 	return conn.closed
 }
 
-func (conn *Connection) execute(sql string, res *connResult, mode C.OUR_MODE) error {
+func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) error {
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
-	if C.our_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
+	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
 		return conn.lastError(sql)
 	}
 
 	return nil
 }
 
-func (conn *Connection) query(sql string, res *connQueryResult, mode C.OUR_MODE) error {
+func (conn *Connection) query(sql string, res *connQueryResult, mode C.MY_MODE) error {
 	err := conn.execute(sql, &res.connResult, mode)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (conn *Connection) query(sql string, res *connQueryResult, mode C.OUR_MODE)
 func (conn *Connection) Execute(sql string) (Result, error) {
 	res := &connResult{}
 
-	err := conn.execute(sql, res, C.OUR_MODE_NONE)
+	err := conn.execute(sql, res, C.MY_MODE_NONE)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (conn *Connection) Execute(sql string) (Result, error) {
 func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 	res := &connDataTable{}
 
-	err := conn.query(sql, &res.connQueryResult, C.OUR_MODE_TABLE)
+	err := conn.query(sql, &res.connQueryResult, C.MY_MODE_TABLE)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	res := &connDataReader{}
 
-	err := conn.query(sql, &res.connQueryResult, C.OUR_MODE_READER)
+	err := conn.query(sql, &res.connQueryResult, C.MY_MODE_READER)
 	if err != nil {
 		return nil, err
 	}

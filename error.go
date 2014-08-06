@@ -1,7 +1,7 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 import "fmt"
@@ -24,8 +24,8 @@ func (se *SqlError) Number() int {
 }
 
 func (conn *Connection) lastError(query string) error {
-	if err := C.our_error(&conn.c); *err != 0 {
-		return &SqlError{Num: int(C.our_errno(&conn.c)), Message: C.GoString(err), Query: query}
+	if err := C.my_error(&conn.c); *err != 0 {
+		return &SqlError{Num: int(C.my_errno(&conn.c)), Message: C.GoString(err), Query: query}
 	}
 	return &SqlError{0, "Unknow", string(query)}
 }
@@ -44,8 +44,8 @@ func (self *StmtError) Error() string {
 }
 
 func (stmt *Stmt) lastError() error {
-	if err := C.our_stmt_error(&stmt.s); *err != 0 {
-		return &StmtError{Num: int(C.our_stmt_errno(&stmt.s)), Message: C.GoString(C.our_stmt_error(&stmt.s)), Stmt: stmt}
+	if err := C.my_stmt_error(&stmt.s); *err != 0 {
+		return &StmtError{Num: int(C.my_stmt_errno(&stmt.s)), Message: C.GoString(C.my_stmt_error(&stmt.s)), Stmt: stmt}
 	}
 	return &StmtError{0, "Unknow", stmt}
 }

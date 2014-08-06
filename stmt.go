@@ -1,7 +1,7 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 import "unsafe"
@@ -13,7 +13,7 @@ var (
 
 type Stmt struct {
 	conn     *Connection
-	s        C.OUR_STMT
+	s        C.MY_STMT
 	sql      string
 	binds    []C.MYSQL_BIND
 	bind_pos int
@@ -24,7 +24,7 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.conn = conn
 	stmt.sql = sql
 
-	if C.our_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
+	if C.my_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
 		return nil, conn.lastError(sql)
 	}
 
@@ -103,7 +103,7 @@ func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) 
 	stmt.bind_pos++
 }
 
-func (stmt *Stmt) execute(res *stmtResult, mode C.OUR_MODE) error {
+func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {
 	if stmt.conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
@@ -113,14 +113,14 @@ func (stmt *Stmt) execute(res *stmtResult, mode C.OUR_MODE) error {
 		bind = &stmt.binds[0]
 	}
 
-	if C.our_stmt_execute(&stmt.s, bind, &res.c, mode) != 0 {
+	if C.my_stmt_execute(&stmt.s, bind, &res.c, mode) != 0 {
 		return stmt.lastError()
 	}
 
 	return nil
 }
 
-func (stmt *Stmt) query(res *stmtQueryResult, mode C.OUR_MODE) error {
+func (stmt *Stmt) query(res *stmtQueryResult, mode C.MY_MODE) error {
 	if err := stmt.execute(&res.stmtResult, mode); err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (stmt *Stmt) query(res *stmtQueryResult, mode C.OUR_MODE) error {
 func (stmt *Stmt) Execute() (Result, error) {
 	res := &stmtResult{}
 
-	if err := stmt.execute(res, C.OUR_MODE_NONE); err != nil {
+	if err := stmt.execute(res, C.MY_MODE_NONE); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +142,7 @@ func (stmt *Stmt) Execute() (Result, error) {
 func (stmt *Stmt) QueryTable() (DataTable, error) {
 	res := &stmtDataTable{}
 
-	if err := stmt.query(&res.stmtQueryResult, C.OUR_MODE_TABLE); err != nil {
+	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_TABLE); err != nil {
 		return nil, err
 	}
 	defer res.close()
@@ -157,7 +157,7 @@ func (stmt *Stmt) QueryTable() (DataTable, error) {
 func (stmt *Stmt) QueryReader() (DataReader, error) {
 	res := &stmtDataReader{}
 
-	if err := stmt.query(&res.stmtQueryResult, C.OUR_MODE_READER); err != nil {
+	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_READER); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +165,7 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 }
 
 func (stmt *Stmt) Close() {
-	C.our_stmt_close(&stmt.s)
+	C.my_stmt_close(&stmt.s)
 }
 
 func cbool(gobool bool) *C.my_bool {

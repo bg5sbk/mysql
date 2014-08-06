@@ -1,7 +1,7 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 import (

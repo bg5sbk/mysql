@@ -13,7 +13,7 @@ If `mysql_config` command already installed on your machine. Just use this shell
 ```shell
 CGO_CFLAGS=`mysql_config --cflags` \
 CGO_LDFLAGS=`mysql_config --libs` \
-go get github.com/funny/oursql
+go get github.com/funny/mysql
 ```
 
 Or you can set `CGO_CFLAGS` and `CGO_LDFLAGS` environment variables by manual.
@@ -23,7 +23,7 @@ Example:
 ```shell
 CGO_CFLAGS="-I/usr/local/Cellar/mysql/5.6.15/include/mysql" \
 CGO_LD_FLAGS="-L/usr/local/Cellar/mysql/5.6.15/lib -lmysqlclient" \
-go get github.com/funny/oursql
+go get github.com/funny/mysql
 ```
 
 How to test

@@ -1,4 +1,4 @@
-package oursql
+package mysql
 
 import (
 	"reflect"

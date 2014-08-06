@@ -1,7 +1,7 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 import (
@@ -19,7 +19,7 @@ const (
 // and lose their original  use Fields.Type to convert
 // them back if needed, using the following functions.
 type connResult struct {
-	c C.OUR_RES
+	c C.MY_RES
 }
 
 func (res *connResult) RowsAffected() uint64 {
@@ -36,7 +36,7 @@ type connQueryResult struct {
 	fields []Field
 }
 
-func fetchFields(c C.OUR_RES_META) []Field {
+func fetchFields(c C.MY_RES_META) []Field {
 	nfields := int(c.num_fields)
 	if nfields == 0 {
 		return nil
@@ -59,7 +59,7 @@ func fetchFields(c C.OUR_RES_META) []Field {
 	return fields
 }
 
-func fetchNext(c C.OUR_RES_META, crow C.OUR_ROW, isStmt bool) (row []Value, err error) {
+func fetchNext(c C.MY_RES_META, crow C.MY_ROW, isStmt bool) (row []Value, err error) {
 	rowPtr := (*[maxSize]*[maxSize]byte)(unsafe.Pointer(crow.mysql_row))
 	if rowPtr == nil {
 		return nil, nil
@@ -96,7 +96,7 @@ func (res *connQueryResult) fillFields() {
 }
 
 func (res *connQueryResult) fetchNext() (row []Value, err error) {
-	crow := C.our_fetch_next(&res.c)
+	crow := C.my_fetch_next(&res.c)
 	if crow.has_error != 0 {
 		return nil, res.conn.lastError("")
 	}
@@ -105,7 +105,7 @@ func (res *connQueryResult) fetchNext() (row []Value, err error) {
 }
 
 func (res *connQueryResult) close() {
-	C.our_close_result(&res.c)
+	C.my_close_result(&res.c)
 }
 
 func (res *connQueryResult) Fields() []Field {

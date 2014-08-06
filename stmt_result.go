@@ -1,12 +1,12 @@
-package oursql
+package mysql
 
 /*
-#include "oursql.h"
+#include "cgo.h"
 */
 import "C"
 
 type stmtResult struct {
-	c C.OUR_STMT_RES
+	c C.MY_STMT_RES
 }
 
 func (res *stmtResult) RowsAffected() uint64 {
@@ -28,7 +28,7 @@ func (res *stmtQueryResult) fillFields() {
 }
 
 func (res *stmtQueryResult) fetchNext() (row []Value, err error) {
-	crow := C.our_stmt_fetch_next(&res.c)
+	crow := C.my_stmt_fetch_next(&res.c)
 	if crow.has_error != 0 {
 		return nil, res.stmt.lastError()
 	}
@@ -37,7 +37,7 @@ func (res *stmtQueryResult) fetchNext() (row []Value, err error) {
 }
 
 func (res *stmtQueryResult) close() {
-	C.our_stmt_close_result(&res.c)
+	C.my_stmt_close_result(&res.c)
 }
 
 func (res *stmtQueryResult) Fields() []Field {
