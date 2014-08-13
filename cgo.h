@@ -15,8 +15,8 @@ typedef enum my_mode {
 // !!! Call this before everything else !!!
 extern void my_library_init(void);
 
-// Create a connection. You must call my_close even if my_connect fails.
-extern int my_connect(
+// Create a connection. You must call my_close even if my_open fails.
+extern int my_open(
 	MYSQL         *mysql,
 	const char    *host,
 	const char    *user,

@@ -61,7 +61,7 @@ func Connect(params ConnectionParams) (conn *Connection, err error) {
 
 	conn = &Connection{}
 
-	if C.my_connect(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
+	if C.my_open(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}

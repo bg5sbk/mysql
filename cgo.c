@@ -19,7 +19,7 @@ void my_library_init(void) {
 	mysql_library_init(0, 0, 0);
 }
 
-int my_connect(
+int my_open(
     MYSQL         *mysql,
     const char    *host,
     const char    *user,
