@@ -230,6 +230,8 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE 
 				case MYSQL_TYPE_DATE:      size = sizeof(MYSQL_TIME); break;    // DATE
 				case MYSQL_TYPE_DATETIME:  size = sizeof(MYSQL_TIME); break;    // DATETIME
 				case MYSQL_TYPE_TIMESTAMP: size = sizeof(MYSQL_TIME); break;    // TIMESTAMP
+
+				// Those type are dynamic length, see my_stmt_fetch_next()
 				case MYSQL_TYPE_DECIMAL:     // DECIMAL
 				case MYSQL_TYPE_NEWDATE:     // MYSQL_TYPE_NEWDATE
 				case MYSQL_TYPE_NEWDECIMAL:  // DECIMAL
@@ -240,6 +242,7 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE 
 				case MYSQL_TYPE_MEDIUM_BLOB: // MEDIUMBLOB, MEDIUMTEXT
 				case MYSQL_TYPE_LONG_BLOB:   // LONGBLOB, LONGTEXT
 				case MYSQL_TYPE_BIT:         // BIT
+				
 				default: break;
 			}
 
