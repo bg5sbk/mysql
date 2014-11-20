@@ -11,6 +11,7 @@ var (
 	c_FALSE = C.my_bool(0)
 )
 
+// Prepared statement.
 type Stmt struct {
 	conn     *Connection
 	s        C.MY_STMT
@@ -19,6 +20,7 @@ type Stmt struct {
 	bind_pos int
 }
 
+// Prepare a statement.
 func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt := &Stmt{}
 	stmt.conn = conn
@@ -33,10 +35,12 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	return stmt, nil
 }
 
+// Clean bind parameters.
 func (stmt *Stmt) CleanBind() {
 	stmt.bind_pos = 0
 }
 
+// Bind a int parameter.
 func (stmt *Stmt) BindInt(value int32) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONG
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -44,6 +48,7 @@ func (stmt *Stmt) BindInt(value int32) {
 	stmt.bind_pos++
 }
 
+// Bind a tinyint parameter.
 func (stmt *Stmt) BindTinyInt(value int8) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_TINY
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -51,6 +56,7 @@ func (stmt *Stmt) BindTinyInt(value int8) {
 	stmt.bind_pos++
 }
 
+// Bind a smallint parameter.
 func (stmt *Stmt) BindSmallInt(value int16) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_SHORT
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -58,6 +64,7 @@ func (stmt *Stmt) BindSmallInt(value int16) {
 	stmt.bind_pos++
 }
 
+// Bind a bigint parameter.
 func (stmt *Stmt) BindBigInt(value int64) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONGLONG
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -65,6 +72,7 @@ func (stmt *Stmt) BindBigInt(value int64) {
 	stmt.bind_pos++
 }
 
+// Bind a float parameter.
 func (stmt *Stmt) BindFloat(value float32) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_FLOAT
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -72,6 +80,7 @@ func (stmt *Stmt) BindFloat(value float32) {
 	stmt.bind_pos++
 }
 
+// Bind a double parameter.
 func (stmt *Stmt) BindDouble(value float64) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_DOUBLE
 	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
@@ -79,6 +88,7 @@ func (stmt *Stmt) BindDouble(value float64) {
 	stmt.bind_pos++
 }
 
+// Bind a string parameter.
 func (stmt *Stmt) BindString(value string) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_VAR_STRING
 	stmt.binds[stmt.bind_pos].buffer = stringPointer(value)
@@ -87,6 +97,7 @@ func (stmt *Stmt) BindString(value string) {
 	stmt.bind_pos++
 }
 
+// Bind a blob parameter.
 func (stmt *Stmt) BindBlob(value []byte) {
 	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_BLOB
 	stmt.binds[stmt.bind_pos].buffer = bytePointer(value)
@@ -95,6 +106,7 @@ func (stmt *Stmt) BindBlob(value []byte) {
 	stmt.bind_pos++
 }
 
+// Bind parameter.
 func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) {
 	stmt.binds[stmt.bind_pos].buffer_type = uint32(paramType)
 	stmt.binds[stmt.bind_pos].buffer = valuePtr
@@ -129,6 +141,7 @@ func (stmt *Stmt) query(res *stmtQueryResult, mode C.MY_MODE) error {
 	return nil
 }
 
+// Execute statement as none-query.
 func (stmt *Stmt) Execute() (Result, error) {
 	res := &stmtResult{}
 
@@ -139,6 +152,7 @@ func (stmt *Stmt) Execute() (Result, error) {
 	return res, nil
 }
 
+// Execute statement and fill result into a DataTable.
 func (stmt *Stmt) QueryTable() (DataTable, error) {
 	res := &stmtDataTable{}
 
@@ -154,6 +168,7 @@ func (stmt *Stmt) QueryTable() (DataTable, error) {
 	return res, nil
 }
 
+// Execute statement and return a result reader. NOTE: Please remember close the reader.
 func (stmt *Stmt) QueryReader() (DataReader, error) {
 	res := &stmtDataReader{}
 
@@ -164,6 +179,7 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 	return res, nil
 }
 
+// Close and dispose the statement.
 func (stmt *Stmt) Close() {
 	C.my_stmt_close(&stmt.s)
 }

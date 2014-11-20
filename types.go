@@ -41,25 +41,42 @@ const (
 	MYSQL_TYPE_LONG_BLOB   = TypeCode(C.MYSQL_TYPE_LONG_BLOB)
 )
 
+// Non-query result.
 type Result interface {
+	// Get how many rows affected by query.
 	RowsAffected() uint64
+
+	// Get the last insert id of the query.
 	InsertId() uint64
 }
 
+// Query result.
 type QueryResult interface {
 	Result
+
+	// Get result fields.
 	Fields() []Field
+
+	// Get field index.
 	IndexOf(string) int
 }
 
+// Filled result.
 type DataTable interface {
 	QueryResult
+
+	// Get all rows.
 	Rows() [][]Value
 }
 
+// Result reader.
 type DataReader interface {
 	QueryResult
+
+	// Fetch next row.
 	FetchNext() ([]Value, error)
+
+	// Close and dispose result.
 	Close()
 }
 
@@ -76,6 +93,7 @@ type Value struct {
 	Inner       []byte
 }
 
+// Convert to int value.
 func (v *Value) Int() int64 {
 	if v.isStmtValue {
 		switch v.Type {
@@ -102,6 +120,7 @@ func (v *Value) Int() int64 {
 	return r
 }
 
+// Convert to float value.
 func (v *Value) Float() float64 {
 	if v.isStmtValue {
 		switch v.Type {
@@ -120,6 +139,7 @@ func (v *Value) Float() float64 {
 	return r
 }
 
+// Convert to string value.
 func (v *Value) String() string {
 	if v.isStmtValue {
 		switch v.Type {

@@ -30,10 +30,29 @@ extern int my_open(
 
 extern void my_close(MYSQL *mysql);
 
-// Pass-through to mysql
+/*
+Pass-through to mysql
+*/
+
+// Returns the current thread ID
 extern unsigned long my_thread_id(MYSQL *mysql);
+
+// Returns the error number for the most recently invoked MySQL function
 extern unsigned int my_errno(MYSQL *mysql);
+
+// Returns the error message for the most recently invoked MySQL function
 extern const char *my_error(MYSQL *mysql);
+
+// Toggles autocommit mode on/off
+extern my_bool my_autocommit(MYSQL *mysql, my_bool mode);
+
+// Escapes special characters in a string for use in an SQL statement, 
+// taking into account the current character set of the connection
+extern unsigned long my_real_escape_string(MYSQL *mysql, char *to, const char *from, unsigned long length);
+
+/*
+Query
+*/
 
 typedef struct my_res_meta {
 	unsigned int num_fields;
@@ -55,14 +74,18 @@ typedef struct my_row {
 	my_bool       *is_nulls;
 } MY_ROW;
 
-// stream!=0 uses streaming (use_result). Otherwise it prefetches (store_result).
+// mode == MY_MODE_READER uses streaming (use_result). Otherwise it prefetches (store_result).
 extern int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode);
 
-// Iterate on this function until mysql_row==NULL or has_error!=0.
+// Iterate on this function until mysql_row == NULL or has_error != 0.
 extern MY_ROW my_fetch_next(MY_RES *res);
 
 // If my_query has results, you must call this before the next invocation.
 extern void my_close_result(MY_RES *res);
+
+/*
+Prepared Statements
+*/
 
 typedef struct my_stmt {
 	MYSQL_STMT    *s;
