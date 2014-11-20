@@ -49,6 +49,10 @@ func (self *StmtError) Error() string {
 }
 
 // Get error number.
+func (self *StmtError) Number() int {
+	return self.Num
+}
+
 func (stmt *Stmt) lastError() error {
 	if err := C.my_stmt_error(&stmt.s); *err != 0 {
 		return &StmtError{Num: int(C.my_stmt_errno(&stmt.s)), Message: C.GoString(C.my_stmt_error(&stmt.s)), Stmt: stmt}
