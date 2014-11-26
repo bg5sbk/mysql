@@ -31,7 +31,6 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	}
 
 	stmt.binds = make([]C.MYSQL_BIND, int(stmt.s.param_count))
-
 	return stmt, nil
 }
 
