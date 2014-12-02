@@ -13,6 +13,6 @@ func stringPointer(s string) unsafe.Pointer {
 
 // returns &b[0], which is not allowed in go
 func bytePointer(b []byte) unsafe.Pointer {
-	p := (*reflect.StringHeader)(unsafe.Pointer(&b))
+	p := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 	return unsafe.Pointer(p.Data)
 }
