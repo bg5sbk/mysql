@@ -41,76 +41,94 @@ func (stmt *Stmt) CleanBind() {
 
 // Bind a int parameter.
 func (stmt *Stmt) BindInt(value int32) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONG
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_LONG,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a tinyint parameter.
 func (stmt *Stmt) BindTinyInt(value int8) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_TINY
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_TINY,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a smallint parameter.
 func (stmt *Stmt) BindSmallInt(value int16) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_SHORT
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_SHORT,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a bigint parameter.
 func (stmt *Stmt) BindBigInt(value int64) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_LONGLONG
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_LONGLONG,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a float parameter.
 func (stmt *Stmt) BindFloat(value float32) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_FLOAT
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_FLOAT,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a double parameter.
 func (stmt *Stmt) BindDouble(value float64) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_DOUBLE
-	stmt.binds[stmt.bind_pos].buffer = unsafe.Pointer(&value)
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type: C.MYSQL_TYPE_DOUBLE,
+		buffer:      unsafe.Pointer(&value),
+		is_null:     &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a string parameter.
 func (stmt *Stmt) BindString(value string) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_VAR_STRING
-	stmt.binds[stmt.bind_pos].buffer = stringPointer(value)
-	stmt.binds[stmt.bind_pos].buffer_length = (C.ulong)(len(value))
-	stmt.binds[stmt.bind_pos].is_null = &c_FALSE
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type:   C.MYSQL_TYPE_VAR_STRING,
+		buffer:        stringPointer(value),
+		buffer_length: (C.ulong)(len(value)),
+		is_null:       &c_FALSE,
+	}
 	stmt.bind_pos++
 }
 
 // Bind a blob parameter.
 func (stmt *Stmt) BindBlob(value []byte) {
-	stmt.binds[stmt.bind_pos].buffer_type = C.MYSQL_TYPE_BLOB
-	stmt.binds[stmt.bind_pos].buffer = bytePointer(value)
-	stmt.binds[stmt.bind_pos].buffer_length = (C.ulong)(len(value))
-	stmt.binds[stmt.bind_pos].is_null = cbool(value == nil)
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type:   C.MYSQL_TYPE_BLOB,
+		buffer:        bytePointer(value),
+		buffer_length: (C.ulong)(len(value)),
+		is_null:       cbool(value == nil),
+	}
 	stmt.bind_pos++
 }
 
 // Bind parameter.
 func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) {
-	stmt.binds[stmt.bind_pos].buffer_type = uint32(paramType)
-	stmt.binds[stmt.bind_pos].buffer = valuePtr
-	stmt.binds[stmt.bind_pos].buffer_length = (C.ulong)(length)
-	stmt.binds[stmt.bind_pos].is_null = cbool(valuePtr == nil)
+	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
+		buffer_type:   uint32(paramType),
+		buffer:        valuePtr,
+		buffer_length: (C.ulong)(length),
+		is_null:       cbool(valuePtr == nil),
+	}
 	stmt.bind_pos++
 }
 
