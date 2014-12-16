@@ -138,6 +138,8 @@ func (stmt *Stmt) bind(paramType TypeCode, valuePtr unsafe.Pointer) {
 // Bind parameter.
 func (stmt *Stmt) Bind(value interface{}) {
 	switch v := value.(type) {
+	case int:
+		stmt.BindBigInt(int64(v))
 	case int8:
 		stmt.BindTinyInt(v)
 	case int16:
@@ -166,8 +168,9 @@ func (stmt *Stmt) Bind(value interface{}) {
 		stmt.bind(C.MYSQL_TYPE_FLOAT, unsafe.Pointer(v))
 	case *float64:
 		stmt.bind(C.MYSQL_TYPE_DOUBLE, unsafe.Pointer(v))
+	default:
+		panic("unknow parameter type")
 	}
-	panic("unknow parameter type")
 }
 
 func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {

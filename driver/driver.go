@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"github.com/funny/mysql"
+	"io"
 )
 
 // MySQL connection parameter.
@@ -199,7 +200,6 @@ func (r *MySqlRows) Columns() []string {
 
 func (r *MySqlRows) Close() error {
 	r.rows.Close()
-	// TODO: error returns
 	return nil
 }
 
@@ -207,6 +207,9 @@ func (r *MySqlRows) Next(dest []driver.Value) error {
 	cols, err := r.rows.FetchNext()
 	if err != nil {
 		return err
+	}
+	if cols == nil {
+		return io.EOF
 	}
 	for i := 0; i < len(cols); i++ {
 		dest[i] = cols[i].Interface().(driver.Value)
