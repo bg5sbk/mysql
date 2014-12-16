@@ -59,14 +59,14 @@ func init() {
 
 // MySQL connection parameter.
 type ConnectionParams struct {
-	Host       string     // MySQL server host name or IP address.
-	Port       int        // MySQL server port number.
-	Uname      string     // MySQL user name.
-	Pass       string     // MySQL password.
-	DbName     string     // database name.
-	UnixSocket string     // Unix socket path when using unix socket connection.
-	Charset    string     // Connection charactor set.
-	Flags      ClientFlag // Client flags. See http://dev.mysql.com/doc/refman/5.6/en/mysql-real-connect.html
+	Host       string     `json:"host"`     // MySQL server host name or IP address.
+	Port       int        `json:"port"`     // MySQL server port number.
+	Uname      string     `json:"user"`     // MySQL user name.
+	Pass       string     `json:"passwd"`   // MySQL password.
+	DbName     string     `json:"database"` // database name.
+	UnixSocket string     `json:"unix"`     // Unix socket path when using unix socket connection.
+	Charset    string     `json:"charset"`  // Connection charactor set.
+	Flags      ClientFlag `json:"-"`        // Client flags. See http://dev.mysql.com/doc/refman/5.6/en/mysql-real-connect.html
 }
 
 // MySQL connection.
@@ -115,8 +115,10 @@ func (conn *Connection) Id() int64 {
 
 // Close connection.
 func (conn *Connection) Close() {
-	C.my_close(&conn.c)
-	conn.closed = true
+	if !conn.closed {
+		C.my_close(&conn.c)
+		conn.closed = true
+	}
 }
 
 // Check connection is closed or not.

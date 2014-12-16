@@ -46,11 +46,8 @@ int my_open(
 }
 
 void my_close(MYSQL *mysql) {
-	if (mysql) {
-		mysql_thread_init();
-		mysql_close(mysql);
-		mysql = NULL;
-	}
+	mysql_thread_init();
+	mysql_close(mysql);
 }
 
 unsigned long my_thread_id(MYSQL *mysql) {
@@ -279,7 +276,7 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE 
 	return 0;
 }
 
-void my_stmt_close(MY_STMT *stmt) {
+int my_stmt_close(MY_STMT *stmt) {
 	mysql_thread_init();
 
 	if (stmt->row_cache != NULL) {
@@ -297,7 +294,11 @@ void my_stmt_close(MY_STMT *stmt) {
 		free(stmt->output_lengths);
 	}
 
-	mysql_stmt_close(stmt->s);
+	if (mysql_stmt_close(stmt->s) != 0) {
+		return 1;
+	}
+
+	return 0;
 }
 
 MY_ROW my_stmt_fetch_next(MY_STMT_RES *res) {

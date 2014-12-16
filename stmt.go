@@ -39,6 +39,11 @@ func (stmt *Stmt) CleanBind() {
 	stmt.bind_pos = 0
 }
 
+// Number of input arguments.
+func (stmt *Stmt) NumInput() int {
+	return len(stmt.binds)
+}
+
 // Bind a int parameter.
 func (stmt *Stmt) BindInt(value int32) {
 	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
@@ -121,15 +126,48 @@ func (stmt *Stmt) BindBlob(value []byte) {
 	stmt.bind_pos++
 }
 
-// Bind parameter.
-func (stmt *Stmt) Bind(paramType TypeCode, valuePtr unsafe.Pointer, length int) {
+func (stmt *Stmt) bind(paramType TypeCode, valuePtr unsafe.Pointer) {
 	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
-		buffer_type:   uint32(paramType),
-		buffer:        valuePtr,
-		buffer_length: (C.ulong)(length),
-		is_null:       cbool(valuePtr == nil),
+		buffer_type: uint32(paramType),
+		buffer:      valuePtr,
+		is_null:     cbool(valuePtr == nil),
 	}
 	stmt.bind_pos++
+}
+
+// Bind parameter.
+func (stmt *Stmt) Bind(value interface{}) {
+	switch v := value.(type) {
+	case int8:
+		stmt.BindTinyInt(v)
+	case int16:
+		stmt.BindSmallInt(v)
+	case int32:
+		stmt.BindInt(v)
+	case int64:
+		stmt.BindBigInt(v)
+	case float32:
+		stmt.BindFloat(v)
+	case float64:
+		stmt.BindDouble(v)
+	case string:
+		stmt.BindString(v)
+	case []byte:
+		stmt.BindBlob(v)
+	case *int8:
+		stmt.bind(C.MYSQL_TYPE_TINY, unsafe.Pointer(v))
+	case *int16:
+		stmt.bind(C.MYSQL_TYPE_SHORT, unsafe.Pointer(v))
+	case *int32:
+		stmt.bind(C.MYSQL_TYPE_LONG, unsafe.Pointer(v))
+	case *int64:
+		stmt.bind(C.MYSQL_TYPE_LONGLONG, unsafe.Pointer(v))
+	case *float32:
+		stmt.bind(C.MYSQL_TYPE_FLOAT, unsafe.Pointer(v))
+	case *float64:
+		stmt.bind(C.MYSQL_TYPE_DOUBLE, unsafe.Pointer(v))
+	}
+	panic("unknow parameter type")
 }
 
 func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {
@@ -197,8 +235,11 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 }
 
 // Close and dispose the statement.
-func (stmt *Stmt) Close() {
-	C.my_stmt_close(&stmt.s)
+func (stmt *Stmt) Close() error {
+	if C.my_stmt_close(&stmt.s) != 0 {
+		return stmt.lastError()
+	}
+	return nil
 }
 
 func cbool(gobool bool) *C.my_bool {

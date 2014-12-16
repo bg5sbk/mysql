@@ -114,7 +114,7 @@ extern const char *my_stmt_error(MY_STMT *stmt);
 
 extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode);
 
-extern void my_stmt_close(MY_STMT *stmt);
+extern int my_stmt_close(MY_STMT *stmt);
 
 extern MY_ROW my_stmt_fetch_next(MY_STMT_RES *res);
 

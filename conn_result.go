@@ -22,12 +22,12 @@ type connResult struct {
 	c C.MY_RES
 }
 
-func (res *connResult) RowsAffected() uint64 {
-	return uint64(res.c.affected_rows)
+func (res *connResult) RowsAffected() int64 {
+	return int64(res.c.affected_rows)
 }
 
-func (res *connResult) InsertId() uint64 {
-	return uint64(res.c.insert_id)
+func (res *connResult) InsertId() int64 {
+	return int64(res.c.insert_id)
 }
 
 type connQueryResult struct {

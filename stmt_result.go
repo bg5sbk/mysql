@@ -9,12 +9,12 @@ type stmtResult struct {
 	c C.MY_STMT_RES
 }
 
-func (res *stmtResult) RowsAffected() uint64 {
-	return uint64(res.c.affected_rows)
+func (res *stmtResult) RowsAffected() int64 {
+	return int64(res.c.affected_rows)
 }
 
-func (res *stmtResult) InsertId() uint64 {
-	return uint64(res.c.insert_id)
+func (res *stmtResult) InsertId() int64 {
+	return int64(res.c.insert_id)
 }
 
 type stmtQueryResult struct {

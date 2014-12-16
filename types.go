@@ -44,10 +44,10 @@ const (
 // Non-query result.
 type Result interface {
 	// Get how many rows affected by query.
-	RowsAffected() uint64
+	RowsAffected() int64
 
 	// Get the last insert id of the query.
-	InsertId() uint64
+	InsertId() int64
 }
 
 // Query result.
@@ -91,6 +91,18 @@ type Value struct {
 	isStmtValue bool
 	Type        TypeCode
 	Inner       []byte
+}
+
+func (v *Value) Interface() interface{} {
+	if v.isStmtValue {
+		switch v.Type {
+		case MYSQL_TYPE_TINY, MYSQL_TYPE_YEAR, MYSQL_TYPE_SHORT, MYSQL_TYPE_INT24, MYSQL_TYPE_LONG, MYSQL_TYPE_LONGLONG:
+			return v.Int()
+		case MYSQL_TYPE_FLOAT, MYSQL_TYPE_DOUBLE:
+			return v.Float()
+		}
+	}
+	return string(v.Inner)
 }
 
 // Convert to int value.
