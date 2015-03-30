@@ -77,7 +77,7 @@ func Test_QueryTable(t *testing.T) {
 	unitest.Pass(t, len(rows) == 10)
 
 	for i := 0; i < 10; i++ {
-		unitest.Pass(t, rows[i][0].Int() == int64(i))
+		unitest.Pass(t, rows[i][0].Int64() == int64(i))
 		unitest.Pass(t, rows[i][1].String() == strconv.Itoa(i))
 	}
 }
@@ -102,7 +102,7 @@ func Test_QueryReader(t *testing.T) {
 			break
 		}
 
-		unitest.Pass(t, row[0].Int() == int64(i))
+		unitest.Pass(t, row[0].Int64() == int64(i))
 		unitest.Pass(t, row[1].String() == strconv.Itoa(i))
 		i++
 	}
@@ -132,7 +132,7 @@ func Test_Prepare(t *testing.T) {
 	unitest.Pass(t, len(rows) == 10)
 
 	for i := 0; i < 10; i++ {
-		unitest.Pass(t, rows[i][0].Int() == int64(i))
+		unitest.Pass(t, rows[i][0].Int64() == int64(i))
 		unitest.Pass(t, rows[i][1].String() == strconv.Itoa(i))
 	}
 
@@ -148,7 +148,7 @@ func Test_Prepare(t *testing.T) {
 			break
 		}
 
-		unitest.Pass(t, row[0].Int() == int64(i))
+		unitest.Pass(t, row[0].Int64() == int64(i))
 		unitest.Pass(t, row[1].String() == strconv.Itoa(i))
 
 		i++

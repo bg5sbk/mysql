@@ -97,16 +97,36 @@ func (v *Value) Interface() interface{} {
 	if v.isStmtValue {
 		switch v.Type {
 		case MYSQL_TYPE_TINY, MYSQL_TYPE_YEAR, MYSQL_TYPE_SHORT, MYSQL_TYPE_INT24, MYSQL_TYPE_LONG, MYSQL_TYPE_LONGLONG:
-			return v.Int()
+			return v.getInt()
 		case MYSQL_TYPE_FLOAT, MYSQL_TYPE_DOUBLE:
-			return v.Float()
+			return v.getFloat()
 		}
 	}
 	return string(v.Inner)
 }
 
+// Convert to int32 value.
+func (v *Value) Int32() int32 {
+	return int32(v.getInt())
+}
+
+// Convert to int64 value.
+func (v *Value) Int64() int64 {
+	return v.getInt()
+}
+
+// Convert to float32 value.
+func (v *Value) Float32() float32 {
+	return float32(v.getFloat())
+}
+
+// Convert to float64 value.
+func (v *Value) Float64() float64 {
+	return v.getFloat()
+}
+
 // Convert to int value.
-func (v *Value) Int() int64 {
+func (v *Value) getInt() int64 {
 	if v.isStmtValue {
 		switch v.Type {
 		case MYSQL_TYPE_TINY:
@@ -125,7 +145,7 @@ func (v *Value) Int() int64 {
 			panic("the value is not integer type")
 		}
 	}
-	r, err := strconv.ParseInt(string(v.Inner), 0, 64)
+	r, err := strconv.ParseInt(byteString(v.Inner), 0, 64)
 	if err != nil {
 		panic(err)
 	}
@@ -133,7 +153,7 @@ func (v *Value) Int() int64 {
 }
 
 // Convert to float value.
-func (v *Value) Float() float64 {
+func (v *Value) getFloat() float64 {
 	if v.isStmtValue {
 		switch v.Type {
 		case MYSQL_TYPE_FLOAT:
@@ -144,7 +164,7 @@ func (v *Value) Float() float64 {
 			panic("the value is not float type")
 		}
 	}
-	r, err := strconv.ParseFloat(string(v.Inner), 64)
+	r, err := strconv.ParseFloat(byteString(v.Inner), 64)
 	if err != nil {
 		panic(err)
 	}
@@ -188,12 +208,12 @@ func (v *Value) String() string {
 		case MYSQL_TYPE_LONG:
 			fallthrough
 		case MYSQL_TYPE_LONGLONG:
-			return strconv.FormatInt(v.Int(), 10)
+			return strconv.FormatInt(v.getInt(), 10)
 		// float
 		case MYSQL_TYPE_FLOAT:
 			fallthrough
 		case MYSQL_TYPE_DOUBLE:
-			return strconv.FormatFloat(v.Float(), 'f', -1, 64)
+			return strconv.FormatFloat(v.getFloat(), 'f', -1, 64)
 		}
 	}
 	return string(v.Inner)

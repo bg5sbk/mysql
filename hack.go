@@ -16,3 +16,8 @@ func bytePointer(b []byte) unsafe.Pointer {
 	p := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 	return unsafe.Pointer(p.Data)
 }
+
+// convert b to string without copy
+func byteString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
+}
