@@ -105,6 +105,16 @@ func (v *Value) Interface() interface{} {
 	return string(v.Inner)
 }
 
+// Convert to int8 value.
+func (v *Value) Int8() int8 {
+	return int8(v.getInt())
+}
+
+// Convert to int16 value.
+func (v *Value) Int16() int16 {
+	return int16(v.getInt())
+}
+
 // Convert to int32 value.
 func (v *Value) Int32() int32 {
 	return int32(v.getInt())

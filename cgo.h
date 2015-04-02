@@ -44,7 +44,13 @@ extern unsigned int my_errno(MYSQL *mysql);
 extern const char *my_error(MYSQL *mysql);
 
 // Toggles autocommit mode on/off
-extern my_bool my_autocommit(MYSQL *mysql, my_bool mode);
+extern int my_autocommit(MYSQL *mysql, my_bool mode);
+
+// Commit current transaction
+extern int my_commit(MYSQL *mysql);
+
+// Rollback current transaction
+extern int my_rollback(MYSQL *mysql);
 
 // Escapes special characters in a string for use in an SQL statement, 
 // taking into account the current character set of the connection

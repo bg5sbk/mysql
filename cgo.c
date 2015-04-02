@@ -65,9 +65,19 @@ const char *my_error(MYSQL *mysql) {
 	return mysql_error(mysql);
 }
 
-my_bool my_autocommit(MYSQL *mysql, my_bool mode) {
+int my_autocommit(MYSQL *mysql, my_bool mode) {
 	mysql_thread_init();
 	return mysql_autocommit(mysql, mode);
+}
+
+int my_commit(MYSQL *mysql) {
+	mysql_thread_init();
+	return mysql_commit(mysql);
+}
+
+int my_rollback(MYSQL *mysql) {
+	mysql_thread_init();
+	return mysql_rollback(mysql);
 }
 
 unsigned long my_real_escape_string(MYSQL *mysql, char *to, const char *from, unsigned long length) {

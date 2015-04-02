@@ -127,12 +127,31 @@ func (conn *Connection) IsClosed() bool {
 }
 
 // Toggles autocommit mode on/off
-func (conn *Connection) Autocommit(mode bool) bool {
+func (conn *Connection) Autocommit(mode bool) error {
 	m := C.my_bool(0)
 	if mode {
 		m = C.my_bool(1)
 	}
-	return C.my_autocommit(&conn.c, m) == 1
+	if C.my_autocommit(&conn.c, m) != 0 {
+		return conn.lastError("")
+	}
+	return nil
+}
+
+// Commit current transaction
+func (conn *Connection) Commit() error {
+	if C.my_commit(&conn.c) != 0 {
+		return conn.lastError("")
+	}
+	return nil
+}
+
+// Rollback current transaction
+func (conn *Connection) Rollback() error {
+	if C.my_rollback(&conn.c) != 0 {
+		return conn.lastError("")
+	}
+	return nil
 }
 
 // Escapes special characters in a string for use in an SQL statement,
