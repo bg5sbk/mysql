@@ -104,8 +104,8 @@ func (stmt *Stmt) BindDouble(value float64) {
 	stmt.bind_pos++
 }
 
-// Bind a string parameter.
-func (stmt *Stmt) BindString(value string) {
+// Bind a text parameter.
+func (stmt *Stmt) BindText(value string) {
 	stmt.binds[stmt.bind_pos] = C.MYSQL_BIND{
 		buffer_type:   C.MYSQL_TYPE_VAR_STRING,
 		buffer:        stringPointer(value),
@@ -153,7 +153,7 @@ func (stmt *Stmt) Bind(value interface{}) {
 	case float64:
 		stmt.BindDouble(v)
 	case string:
-		stmt.BindString(v)
+		stmt.BindText(v)
 	case []byte:
 		stmt.BindBlob(v)
 	case *int8:
