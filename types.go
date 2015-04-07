@@ -93,6 +93,12 @@ type Value struct {
 	Inner       []byte
 }
 
+// Check value is null or not.
+func (v *Value) IsNull() bool {
+	return v.Inner == nil
+}
+
+// Auto convert.
 func (v *Value) Interface() interface{} {
 	if v.isStmtValue {
 		switch v.Type {

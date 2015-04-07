@@ -162,13 +162,35 @@ func Test_Prepare(t *testing.T) {
 	unitest.NotError(t, err)
 
 	stmt.BindInt(10)
-	stmt.BindString("10")
+	stmt.BindText("10")
 
 	res, err = stmt.Execute()
 	unitest.NotError(t, err)
 	unitest.Pass(t, res.RowsAffected() == 1)
 
 	stmt.Close()
+}
+
+func Test_Null(t *testing.T) {
+	conn, err := Connect(TestConnParam)
+	unitest.NotError(t, err)
+	defer conn.Close()
+
+	var res DataTable
+
+	res, err = conn.QueryTable("SELECT SUM(value) FROM test")
+	unitest.NotError(t, err)
+
+	rows1 := res.Rows()
+	unitest.Pass(t, len(rows1) == 1)
+	unitest.Pass(t, rows1[0][0].IsNull() == false)
+
+	res, err = conn.QueryTable("SELECT SUM(value) FROM test WHERE id > 8888")
+	unitest.NotError(t, err)
+
+	rows2 := res.Rows()
+	unitest.Pass(t, len(rows2) == 1)
+	unitest.Pass(t, rows2[0][0].IsNull())
 }
 
 func Test_Clean(t *testing.T) {
