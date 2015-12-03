@@ -7,16 +7,13 @@ go:
     - 1.4.2
     - 1.5.1
 
-services:
-    - mysql
-
 env:
     - CGO_CFLAGS="`mysql_config --cflags` -std=c99" CGO_LDFLAGS="`mysql_config --libs`"
 
 before_install:
-	- sudo apt-get update
-	- sudo apt-get install mysql-server
-	- sudo /etc/init.d/mysql start
+    - sudo apt-get update
+    - sudo apt-get install mysql-server
+    - sudo /etc/init.d/mysql start
 
 install:
     - go get github.com/mattn/goveralls
