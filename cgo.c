@@ -30,8 +30,6 @@ int my_open(
     const char    *csname,
     unsigned long client_flag
 ) {
-	mysql_thread_init();
-
 	mysql_init(mysql);
 
 	if (!mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag)) {
