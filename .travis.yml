@@ -8,15 +8,15 @@ go:
     - 1.5.1
 
 env:
-    - CGO_CFLAGS="`mysql_config --cflags` -std=c99" CGO_LDFLAGS="`mysql_config --libs`"
+    - CGO_CFLAGS="`mysql_config --cflags` -std=c99" CGO_LDFLAGS="`mysql_config --libs`" TEST_MYSQL_PASS=123
 
 before_install:
     - sudo apt-get update
-    - sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password ""'
-    - sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password ""'
+    - sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password 123'
+    - sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password 123'
     - sudo apt-get -y install mysql-server
     - sudo /etc/init.d/mysql start
-    - mysql -uroot -h127.0.0.1 -e 'create database mysql_test;'
+    - mysql -uroot -h127.0.0.1 -p123 -e 'create database mysql_test;'
 
 install:
     - go get github.com/mattn/goveralls
