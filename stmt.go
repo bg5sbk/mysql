@@ -26,7 +26,7 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.conn = conn
 	stmt.sql = sql
 
-	if C.my_prepare(&stmt.s, conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
+	if C.my_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
 		return nil, conn.lastError(sql)
 	}
 

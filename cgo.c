@@ -12,26 +12,6 @@
 // (this was imported from Linux kernel source tree)
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 
-MY_PARAMS* my_new_params() {
-	return (MY_PARAMS*)calloc(sizeof(MY_PARAMS), 1);
-}
-
-void my_free_params(MY_PARAMS* params) {
-	if (params->host != NULL)
-		free(params->host);
-	if (params->user != NULL)
-		free(params->user);
-	if (params->passwd != NULL)
-		free(params->passwd);
-	if (params->db != NULL)
-		free(params->db);
-	if (params->unix_socket != NULL)
-		free(params->unix_socket);
-	if (params->charset != NULL)
-		free(params->charset);
-	free(params);
-}
-
 void my_library_init(void) {
 	// we depend on linking with the 64 bits version of the MySQL library:
 	// the go code depends on mysql_fetch_lengths() returning 64 bits unsigned.
@@ -39,73 +19,73 @@ void my_library_init(void) {
 	mysql_library_init(0, 0, 0);
 }
 
-MYSQL* my_open(MY_PARAMS* params) {
+int my_open(
+    MYSQL         *mysql,
+    const char    *host,
+    const char    *user,
+    const char    *passwd,
+    const char    *db,
+    unsigned int  port,
+    const char    *unix_socket,
+    const char    *csname,
+    unsigned long client_flag
+) {
 	mysql_thread_init();
 
-	MYSQL* mysql = mysql_init(NULL);
+	mysql_init(mysql);
 
-	if (!mysql_real_connect(
-		mysql, 
-		params->host, 
-		params->user, 
-		params->passwd, 
-		params->db, 
-		params->port, 
-		params->unix_socket,
-		params->client_flag
-	)) {
-		mysql_close(mysql);
-		return NULL;
+	if (!mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag)) {
+		return 1;
 	}
 
-	if (!mysql_set_character_set(mysql, params->charset)) {
-		mysql_close(mysql);
-		return NULL;
+	if (!mysql_set_character_set(mysql, csname)) {
+		return 1;
 	}
-	return mysql;
+
+	return 0;
 }
 
-void my_close(MYSQL* mysql) {
+void my_close(MYSQL *mysql) {
 	mysql_thread_init();
 	mysql_close(mysql);
 }
 
-unsigned long my_thread_id(MYSQL* mysql) {
+unsigned long my_thread_id(MYSQL *mysql) {
 	mysql_thread_init();
 	return mysql_thread_id(mysql);
 }
 
-unsigned int my_errno(MYSQL* mysql) {
+unsigned int my_errno(MYSQL *mysql) {
 	mysql_thread_init();
 	return mysql_errno(mysql);
 }
 
-const char* my_error(MYSQL* mysql) {
+const char *my_error(MYSQL *mysql) {
 	mysql_thread_init();
 	return mysql_error(mysql);
 }
 
-int my_autocommit(MYSQL* mysql, my_bool mode) {
+int my_autocommit(MYSQL *mysql, my_bool mode) {
 	mysql_thread_init();
 	return mysql_autocommit(mysql, mode);
 }
 
-int my_commit(MYSQL* mysql) {
+int my_commit(MYSQL *mysql) {
 	mysql_thread_init();
 	return mysql_commit(mysql);
 }
 
-int my_rollback(MYSQL* mysql) {
+int my_rollback(MYSQL *mysql) {
 	mysql_thread_init();
 	return mysql_rollback(mysql);
 }
 
-unsigned long my_real_escape_string(MYSQL* mysql, char* to, const char* from, unsigned long length) {
+unsigned long my_real_escape_string(MYSQL *mysql, char *to, const char *from, unsigned long length) {
 	mysql_thread_init();
 	return mysql_real_escape_string(mysql, to, from, length);
 }
 
-int my_query(MYSQL* mysql, MY_RES* res, const char* sql_str, unsigned long sql_len, MY_MODE mode) {
+int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (mysql_real_query(mysql, sql_str, sql_len) != 0) {
@@ -134,7 +114,7 @@ int my_query(MYSQL* mysql, MY_RES* res, const char* sql_str, unsigned long sql_l
 	return 0;
 }
 
-MY_ROW my_fetch_next(MY_RES* res) {
+MY_ROW my_fetch_next(MY_RES *res) {
 	MY_ROW row = {0, 0, 0};
 
 	if(res->meta.num_fields == 0) {
@@ -156,8 +136,8 @@ MY_ROW my_fetch_next(MY_RES* res) {
 	return row;
 }
 
-void my_close_result(MY_RES* res) {
-	MYSQL_RES* result;
+void my_close_result(MY_RES *res) {
+	MYSQL_RES *result;
 
 	mysql_thread_init();
 
@@ -177,7 +157,7 @@ void my_close_result(MY_RES* res) {
 	}
 }
 
-int my_prepare(MY_STMT* stmt, MYSQL* mysql, const char* sql_str, unsigned long sql_len) {
+int my_prepare(MY_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
 	mysql_thread_init();
 
 	stmt->s = mysql_stmt_init(mysql);
@@ -191,17 +171,17 @@ int my_prepare(MY_STMT* stmt, MYSQL* mysql, const char* sql_str, unsigned long s
 	return 0;
 }
 
-int my_stmt_errno(MY_STMT* stmt) {
+int my_stmt_errno(MY_STMT *stmt) {
 	mysql_thread_init();
 	return mysql_stmt_errno(stmt->s);
 }
 
-const char* my_stmt_error(MY_STMT* stmt) {
+const char *my_stmt_error(MY_STMT *stmt) {
   mysql_thread_init();
   return mysql_stmt_error(stmt->s);
 }
 
-int my_stmt_execute(MY_STMT* stmt, MYSQL_BIND* binds, MY_STMT_RES* res, MY_MODE mode) {
+int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (binds != NULL) {
@@ -213,7 +193,7 @@ int my_stmt_execute(MY_STMT* stmt, MYSQL_BIND* binds, MY_STMT_RES* res, MY_MODE 
 	if (mode != MY_MODE_NONE && stmt->meta_init == 0) {
 		stmt->meta_init = 1;
 
-		MYSQL_RES* meta = mysql_stmt_result_metadata(stmt->s);
+		MYSQL_RES *meta = mysql_stmt_result_metadata(stmt->s);
 		if (meta == NULL) {
 			return 1;
 		}
@@ -306,7 +286,7 @@ int my_stmt_execute(MY_STMT* stmt, MYSQL_BIND* binds, MY_STMT_RES* res, MY_MODE 
 	return 0;
 }
 
-int my_stmt_close(MY_STMT* stmt) {
+int my_stmt_close(MY_STMT *stmt) {
 	mysql_thread_init();
 
 	if (stmt->row_cache != NULL) {
@@ -331,8 +311,8 @@ int my_stmt_close(MY_STMT* stmt) {
 	return 0;
 }
 
-MY_ROW my_stmt_fetch_next(MY_STMT_RES* res) {
-	MY_STMT* stmt = res->stmt;
+MY_ROW my_stmt_fetch_next(MY_STMT_RES *res) {
+	MY_STMT *stmt = res->stmt;
 
 	MY_ROW row = {0, 0, 0};
 
@@ -393,7 +373,7 @@ MY_ROW my_stmt_fetch_next(MY_STMT_RES* res) {
 	return row;
 }
 
-void my_stmt_close_result(MY_STMT_RES* res) {
+void my_stmt_close_result(MY_STMT_RES *res) {
 	mysql_thread_init();
 	mysql_stmt_free_result(res->stmt->s);
 }

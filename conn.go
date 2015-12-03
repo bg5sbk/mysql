@@ -4,6 +4,9 @@ package mysql
 #include "cgo.h"
 */
 import "C"
+import (
+	"unsafe"
+)
 
 type ClientFlag int64
 
@@ -58,7 +61,7 @@ func init() {
 type ConnectionParams struct {
 	Host       string     `json:"host"`     // MySQL server host name or IP address.
 	Port       int        `json:"port"`     // MySQL server port number.
-	User       string     `json:"user"`     // MySQL user name.
+	Uname      string     `json:"user"`     // MySQL user name.
 	Pass       string     `json:"passwd"`   // MySQL password.
 	DbName     string     `json:"database"` // database name.
 	UnixSocket string     `json:"unix"`     // Unix socket path when using unix socket connection.
@@ -66,50 +69,54 @@ type ConnectionParams struct {
 	Flags      ClientFlag `json:"-"`        // Client flags. See http://dev.mysql.com/doc/refman/5.6/en/mysql-real-connect.html
 }
 
-func (params *ConnectionParams) toC() *C.MY_PARAMS {
-	cparams := C.my_new_params()
-	cparams.host = C.CString(params.Host)
-	cparams.user = C.CString(params.User)
-	cparams.passwd = C.CString(params.Pass)
-	cparams.db = C.CString(params.DbName)
-	cparams.unix_socket = C.CString(params.UnixSocket)
-	cparams.charset = C.CString(params.Charset)
-	cparams.port = C.uint(params.Port)
-	cparams.client_flag = C.ulong(params.Flags)
-	return cparams
-}
-
 // MySQL connection.
 type Connection struct {
-	c      *C.MYSQL
+	c      C.MYSQL
 	closed bool
 }
 
 // Connect to MySQL server.
-func Connect(params ConnectionParams) (*Connection, error) {
-	conn := Connection{}
+func Connect(params ConnectionParams) (conn *Connection, err error) {
+	host := C.CString(params.Host)
+	defer cfree(host)
 
-	cparams := params.toC()
-	defer C.my_free_params(cparams)
+	uname := C.CString(params.Uname)
+	defer cfree(uname)
 
-	if conn.c = C.my_open(cparams); conn.c == nil {
+	pass := C.CString(params.Pass)
+	defer cfree(pass)
+
+	dbname := C.CString(params.DbName)
+	defer cfree(dbname)
+
+	unix_socket := C.CString(params.UnixSocket)
+	defer cfree(unix_socket)
+
+	charset := C.CString(params.Charset)
+	defer cfree(charset)
+
+	port := C.uint(params.Port)
+	flags := C.ulong(params.Flags)
+
+	conn = &Connection{}
+
+	if C.my_open(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}
-	return &conn, nil
+
+	return conn, nil
 }
 
 // Get current connection thread id.
 func (conn *Connection) Id() int64 {
-	return int64(C.my_thread_id(conn.c))
+	return int64(C.my_thread_id(&conn.c))
 }
 
 // Close connection.
 func (conn *Connection) Close() {
 	if !conn.closed {
-		if conn.c != nil {
-			C.my_close(conn.c)
-		}
+		C.my_close(&conn.c)
 		conn.closed = true
 	}
 }
@@ -125,7 +132,7 @@ func (conn *Connection) Autocommit(mode bool) error {
 	if mode {
 		m = C.my_bool(1)
 	}
-	if C.my_autocommit(conn.c, m) != 0 {
+	if C.my_autocommit(&conn.c, m) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -133,7 +140,7 @@ func (conn *Connection) Autocommit(mode bool) error {
 
 // Commit current transaction
 func (conn *Connection) Commit() error {
-	if C.my_commit(conn.c) != 0 {
+	if C.my_commit(&conn.c) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -141,7 +148,7 @@ func (conn *Connection) Commit() error {
 
 // Rollback current transaction
 func (conn *Connection) Rollback() error {
-	if C.my_rollback(conn.c) != 0 {
+	if C.my_rollback(&conn.c) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -151,7 +158,7 @@ func (conn *Connection) Rollback() error {
 // taking into account the current character set of the connection.
 func (conn *Connection) Escape(from string) string {
 	to := make([]byte, len(from)*2+1)
-	length := C.my_real_escape_string(conn.c, (*C.char)(bytePointer(to)), (*C.char)(stringPointer(from)), C.ulong(len(from)))
+	length := C.my_real_escape_string(&conn.c, (*C.char)(bytePointer(to)), (*C.char)(stringPointer(from)), C.ulong(len(from)))
 	return string(to[:length])
 }
 
@@ -197,12 +204,18 @@ func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	return res, nil
 }
 
+func cfree(str *C.char) {
+	if str != nil {
+		C.free(unsafe.Pointer(str))
+	}
+}
+
 func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) error {
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
-	if C.my_query(conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
+	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
 		return conn.lastError(sql)
 	}
 

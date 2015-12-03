@@ -21,7 +21,7 @@ func init() {
 	TestConnParam.Host = env("TEST_MYSQL_HOST", "127.0.0.1")
 	TestConnParam.Port, _ = strconv.Atoi(env("TEST_MYSQL_PORT", "3306"))
 	TestConnParam.DbName = env("TEST_MYSQL_DBNAME", "mysql_test")
-	TestConnParam.User = env("TEST_MYSQL_USER", "root")
+	TestConnParam.Uname = env("TEST_MYSQL_UNAME", "root")
 	TestConnParam.Pass = env("TEST_MYSQL_PASS", "")
 }
 

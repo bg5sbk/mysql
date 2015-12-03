@@ -11,7 +11,7 @@ import (
 type connParams struct {
 	Host       string `json:"host"`     // MySQL server host name or IP address.
 	Port       int    `json:"port"`     // MySQL server port number.
-	User       string `json:"user"`     // MySQL user name.
+	Uname      string `json:"user"`     // MySQL user name.
 	Pass       string `json:"passwd"`   // MySQL password.
 	DbName     string `json:"database"` // database name.
 	UnixSocket string `json:"unix"`     // Unix socket path when using unix socket connection.
@@ -31,7 +31,7 @@ func (d MySqlDriver) Open(name string) (driver.Conn, error) {
 	conn, err := mysql.Connect(mysql.ConnectionParams{
 		Host:       params.Host,
 		Port:       params.Port,
-		User:       params.User,
+		Uname:      params.Uname,
 		Pass:       params.Pass,
 		DbName:     params.DbName,
 		UnixSocket: params.UnixSocket,
