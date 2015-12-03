@@ -13,14 +13,16 @@ services:
 env:
     - CGO_CFLAGS="`mysql_config --cflags` -std=c99" CGO_LDFLAGS="`mysql_config --libs`"
 
+before_install:
+	- sudo apt-get update
+	- sudo apt-get install mysql-server
+	- sudo /etc/init.d/mysql start
+
 install:
     - go get github.com/mattn/goveralls
     - go get github.com/funny/utest
     - go get -d -v ./...
     - go build -v ./...
-
-before_script:
-    - mysql -e 'create database mysql_test;'
 
 script:
     - go vet -x ./...
