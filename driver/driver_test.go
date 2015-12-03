@@ -26,7 +26,7 @@ func init() {
 	TestConnEnv.Host = env("TEST_MYSQL_HOST", "127.0.0.1")
 	TestConnEnv.Port, _ = strconv.Atoi(env("TEST_MYSQL_PORT", "3306"))
 	TestConnEnv.DbName = env("TEST_MYSQL_DBNAME", "mysql_test")
-	TestConnEnv.Uname = env("TEST_MYSQL_UNAME", "root")
+	TestConnEnv.User = env("TEST_MYSQL_USER", "root")
 	TestConnEnv.Pass = env("TEST_MYSQL_PASS", "")
 
 	name, err := json.Marshal(TestConnEnv)
