@@ -7,7 +7,7 @@ services:
     - mysql
 
 env:
-    - CGO_CFLAGS="`mysql_config --cflags`" CGO_LDFLAGS="`mysql_config --libs`"
+    - CGO_CFLAGS="`mysql_config --cflags` -std=gnu99" CGO_LDFLAGS="`mysql_config --libs`"
 
 install:
     - go get github.com/mattn/goveralls
