@@ -27,8 +27,8 @@ func (se *SqlError) Number() int {
 }
 
 func (conn *Connection) lastError(query string) error {
-	if err := C.my_error(&conn.c); *err != 0 {
-		return &SqlError{Num: int(C.my_errno(&conn.c)), Message: C.GoString(err), Query: query}
+	if err := C.my_error(conn.c); *err != 0 {
+		return &SqlError{Num: int(C.my_errno(conn.c)), Message: C.GoString(err), Query: query}
 	}
 	return &SqlError{0, "Unknow", string(query)}
 }

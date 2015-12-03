@@ -32,9 +32,9 @@ go get github.com/funny/mysql
 ```
 TEST_MYSQL_HOST - MySQL服务器地址。 默认值：127.0.0.1
 TEST_MYSQL_PORT - MySQL服务器端口号。 默认值：3306
-TEST_MYSQL_DBNAME - 单元测试用的数据库名。 默认值：oursql_test
-TEST_MYSQL_UNAME - 数据库用户名。默认值：root
+TEST_MYSQL_USER - 数据库用户名。默认值：root
 TEST_MYSQL_PASS - 数据库密码。
+TEST_MYSQL_DBNAME - 单元测试用的数据库名。 默认值：oursql_test
 ```
 
 示例：

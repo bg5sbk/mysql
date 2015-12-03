@@ -34,9 +34,9 @@ The unit test use some environment variable to override connection parameter.
 ```
 TEST_MYSQL_HOST - MySQL server host name or IP address. Default 127.0.0.1
 TEST_MYSQL_PORT - MySQL server port. Default 3306
-TEST_MYSQL_DBNAME - Database name for unit test. Default oursql_test
-TEST_MYSQL_UNAME - The user name. Default root
+TEST_MYSQL_USER - The user name. Default root
 TEST_MYSQL_PASS - The password.
+TEST_MYSQL_DBNAME - Database name for unit test. Default oursql_test
 ```
 
 Example:

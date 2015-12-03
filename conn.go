@@ -4,9 +4,6 @@ package mysql
 #include "cgo.h"
 */
 import "C"
-import (
-	"unsafe"
-)
 
 type ClientFlag int64
 
@@ -84,7 +81,7 @@ func (params *ConnectionParams) toC() *C.MY_PARAMS {
 
 // MySQL connection.
 type Connection struct {
-	c      C.MYSQL
+	c      *C.MYSQL
 	closed bool
 }
 
@@ -95,7 +92,7 @@ func Connect(params ConnectionParams) (*Connection, error) {
 	cparams := params.toC()
 	defer C.my_free_params(cparams)
 
-	if C.my_open(&conn.c, cparams) != 0 {
+	if conn.c = C.my_open(cparams); conn.c == nil {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}
@@ -104,13 +101,15 @@ func Connect(params ConnectionParams) (*Connection, error) {
 
 // Get current connection thread id.
 func (conn *Connection) Id() int64 {
-	return int64(C.my_thread_id(&conn.c))
+	return int64(C.my_thread_id(conn.c))
 }
 
 // Close connection.
 func (conn *Connection) Close() {
 	if !conn.closed {
-		C.my_close(&conn.c)
+		if conn.c != nil {
+			C.my_close(conn.c)
+		}
 		conn.closed = true
 	}
 }
@@ -126,7 +125,7 @@ func (conn *Connection) Autocommit(mode bool) error {
 	if mode {
 		m = C.my_bool(1)
 	}
-	if C.my_autocommit(&conn.c, m) != 0 {
+	if C.my_autocommit(conn.c, m) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -134,7 +133,7 @@ func (conn *Connection) Autocommit(mode bool) error {
 
 // Commit current transaction
 func (conn *Connection) Commit() error {
-	if C.my_commit(&conn.c) != 0 {
+	if C.my_commit(conn.c) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -142,7 +141,7 @@ func (conn *Connection) Commit() error {
 
 // Rollback current transaction
 func (conn *Connection) Rollback() error {
-	if C.my_rollback(&conn.c) != 0 {
+	if C.my_rollback(conn.c) != 0 {
 		return conn.lastError("")
 	}
 	return nil
@@ -152,7 +151,7 @@ func (conn *Connection) Rollback() error {
 // taking into account the current character set of the connection.
 func (conn *Connection) Escape(from string) string {
 	to := make([]byte, len(from)*2+1)
-	length := C.my_real_escape_string(&conn.c, (*C.char)(bytePointer(to)), (*C.char)(stringPointer(from)), C.ulong(len(from)))
+	length := C.my_real_escape_string(conn.c, (*C.char)(bytePointer(to)), (*C.char)(stringPointer(from)), C.ulong(len(from)))
 	return string(to[:length])
 }
 
@@ -198,18 +197,12 @@ func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	return res, nil
 }
 
-func cfree(str *C.char) {
-	if str != nil {
-		C.free(unsafe.Pointer(str))
-	}
-}
-
 func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) error {
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
-	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
+	if C.my_query(conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
 		return conn.lastError(sql)
 	}
 
