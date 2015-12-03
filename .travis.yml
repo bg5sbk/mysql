@@ -7,9 +7,12 @@ services:
     - mysql
 
 install:
+	- export CGO_CFLAGS=`mysql_config --cflags`
+	- export CGO_LDFLAGS=`mysql_config --libs` 
     - go get github.com/mattn/goveralls
     - go get github.com/funny/utest
-    - go get -d -v ./... && go build -v ./...
+    - go get -d -v ./...
+    - go build -v ./...
 
 script:
     - go vet -x ./...
