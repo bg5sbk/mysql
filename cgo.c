@@ -42,9 +42,7 @@ void my_library_init(void) {
 MYSQL* my_open(MY_PARAMS* params) {
 	mysql_thread_init();
 
-	MYSQL* mysql = (MYSQL*)calloc(sizeof(MYSQL), 1);
-
-	mysql_init(mysql);
+	MYSQL* mysql = mysql_init(NULL);
 
 	if (!mysql_real_connect(
 		mysql, 
@@ -56,10 +54,12 @@ MYSQL* my_open(MY_PARAMS* params) {
 		params->unix_socket,
 		params->client_flag
 	)) {
+		mysql_close(mysql);
 		return NULL;
 	}
 
 	if (!mysql_set_character_set(mysql, params->charset)) {
+		mysql_close(mysql);
 		return NULL;
 	}
 	return mysql;
@@ -68,7 +68,6 @@ MYSQL* my_open(MY_PARAMS* params) {
 void my_close(MYSQL* mysql) {
 	mysql_thread_init();
 	mysql_close(mysql);
-	free(mysql);
 }
 
 unsigned long my_thread_id(MYSQL* mysql) {
