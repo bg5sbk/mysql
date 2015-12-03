@@ -40,13 +40,11 @@ void my_library_init(void) {
 }
 
 MYSQL* my_open(MY_PARAMS* params) {
-	printf("my_open()\n");
 	mysql_thread_init();
-	printf("mysql_thread_init() done\n");
 
-	MYSQL* mysql = mysql_init(NULL);
+	MYSQL* mysql = (MYSQL*)calloc(sizeof(MYSQL), 1);
 
-	printf("mysql_init() done\n");
+	mysql_init(mysql);
 
 	if (!mysql_real_connect(
 		mysql, 
@@ -58,25 +56,19 @@ MYSQL* my_open(MY_PARAMS* params) {
 		params->unix_socket,
 		params->client_flag
 	)) {
-		printf("mysql_real_connect() failed\n");
-		mysql_close(mysql);
 		return NULL;
 	}
-
-	printf("mysql_real_connect() done\n");
 
 	if (!mysql_set_character_set(mysql, params->charset)) {
-		printf("mysql_set_character_set() failed\n");
-		mysql_close(mysql);
 		return NULL;
 	}
-	printf("mysql_set_character_set() done\n");
 	return mysql;
 }
 
 void my_close(MYSQL* mysql) {
 	mysql_thread_init();
 	mysql_close(mysql);
+	free(mysql);
 }
 
 unsigned long my_thread_id(MYSQL* mysql) {
