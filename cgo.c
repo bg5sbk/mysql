@@ -12,6 +12,26 @@
 // (this was imported from Linux kernel source tree)
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 
+MY_PARAMS* my_new_params() {
+	return (MY_PARAMS*)calloc(sizeof(MY_PARAMS), 1);
+}
+
+void my_free_params(MY_PARAMS* params) {
+	if (params->host != NULL)
+		free(params->host);
+	if (params->user != NULL)
+		free(params->user);
+	if (params->passwd != NULL)
+		free(params->passwd);
+	if (params->db != NULL)
+		free(params->db);
+	if (params->unix_socket != NULL)
+		free(params->unix_socket);
+	if (params->charset != NULL)
+		free(params->charset);
+	free(params);
+}
+
 void my_library_init(void) {
 	// we depend on linking with the 64 bits version of the MySQL library:
 	// the go code depends on mysql_fetch_lengths() returning 64 bits unsigned.
@@ -19,27 +39,27 @@ void my_library_init(void) {
 	mysql_library_init(0, 0, 0);
 }
 
-int my_open(
-    MYSQL         *mysql,
-    const char    *host,
-    const char    *user,
-    const char    *passwd,
-    const char    *db,
-    unsigned int  port,
-    const char    *unix_socket,
-    const char    *csname,
-    unsigned long client_flag
-) {
+int my_open(MYSQL *mysql, MY_PARAMS* params) {
+	mysql_thread_init();
+
 	mysql_init(mysql);
 
-	if (!mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag)) {
+	if (!mysql_real_connect(
+		mysql, 
+		params->host, 
+		params->user, 
+		params->passwd, 
+		params->db, 
+		params->port, 
+		params->unix_socket,
+		params->client_flag
+	)) {
 		return 1;
 	}
 
-	if (!mysql_set_character_set(mysql, csname)) {
+	if (!mysql_set_character_set(mysql, params->charset)) {
 		return 1;
 	}
-
 	return 0;
 }
 

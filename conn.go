@@ -61,12 +61,25 @@ func init() {
 type ConnectionParams struct {
 	Host       string     `json:"host"`     // MySQL server host name or IP address.
 	Port       int        `json:"port"`     // MySQL server port number.
-	Uname      string     `json:"user"`     // MySQL user name.
+	User       string     `json:"user"`     // MySQL user name.
 	Pass       string     `json:"passwd"`   // MySQL password.
 	DbName     string     `json:"database"` // database name.
 	UnixSocket string     `json:"unix"`     // Unix socket path when using unix socket connection.
 	Charset    string     `json:"charset"`  // Connection charactor set.
 	Flags      ClientFlag `json:"-"`        // Client flags. See http://dev.mysql.com/doc/refman/5.6/en/mysql-real-connect.html
+}
+
+func (params *ConnectionParams) toC() *C.MY_PARAMS {
+	cparams := C.my_new_params()
+	cparams.host = C.CString(params.Host)
+	cparams.user = C.CString(params.User)
+	cparams.passwd = C.CString(params.Pass)
+	cparams.db = C.CString(params.DbName)
+	cparams.unix_socket = C.CString(params.UnixSocket)
+	cparams.charset = C.CString(params.Charset)
+	cparams.port = C.uint(params.Port)
+	cparams.client_flag = C.ulong(params.Flags)
+	return cparams
 }
 
 // MySQL connection.
@@ -76,36 +89,17 @@ type Connection struct {
 }
 
 // Connect to MySQL server.
-func Connect(params ConnectionParams) (conn *Connection, err error) {
-	host := C.CString(params.Host)
-	defer cfree(host)
+func Connect(params ConnectionParams) (*Connection, error) {
+	conn := Connection{}
 
-	uname := C.CString(params.Uname)
-	defer cfree(uname)
+	cparams := params.toC()
+	defer C.my_free_params(cparams)
 
-	pass := C.CString(params.Pass)
-	defer cfree(pass)
-
-	dbname := C.CString(params.DbName)
-	defer cfree(dbname)
-
-	unix_socket := C.CString(params.UnixSocket)
-	defer cfree(unix_socket)
-
-	charset := C.CString(params.Charset)
-	defer cfree(charset)
-
-	port := C.uint(params.Port)
-	flags := C.ulong(params.Flags)
-
-	conn = &Connection{}
-
-	if C.my_open(&conn.c, host, uname, pass, dbname, port, unix_socket, charset, flags) != 0 {
+	if C.my_open(&conn.c, cparams) != 0 {
 		defer conn.Close()
 		return nil, conn.lastError("")
 	}
-
-	return conn, nil
+	return &conn, nil
 }
 
 // Get current connection thread id.

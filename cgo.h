@@ -4,6 +4,20 @@
 #include <stdlib.h>
 #include <mysql.h>
 
+typedef struct my_params {
+	char          *host;
+	char          *user;
+	char          *passwd;
+	char          *db;
+	unsigned int  port;
+	char          *unix_socket;
+	char          *charset;
+	unsigned long client_flag;
+} MY_PARAMS;
+
+extern MY_PARAMS* my_new_params();
+extern void my_free_params(MY_PARAMS *params);
+
 typedef enum my_mode {
 	MY_MODE_NONE,
 	MY_MODE_TABLE,
@@ -16,17 +30,7 @@ typedef enum my_mode {
 extern void my_library_init(void);
 
 // Create a connection. You must call my_close even if my_open fails.
-extern int my_open(
-	MYSQL         *mysql,
-	const char    *host,
-	const char    *user,
-	const char    *passwd,
-	const char    *db,
-	unsigned int  port,
-	const char    *unix_socket,
-	const char    *csname,
-	unsigned long client_flag
-);
+extern int my_open(MYSQL *mysql, MY_PARAMS *params);
 
 extern void my_close(MYSQL *mysql);
 
