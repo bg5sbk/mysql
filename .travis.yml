@@ -16,7 +16,7 @@ before_install:
     - sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password ""'
     - sudo apt-get -y install mysql-server
     - sudo /etc/init.d/mysql start
-    - mysql -e 'create database mysql_test;'
+    - mysql -uroot -e 'create database mysql_test;'
 
 install:
     - go get github.com/mattn/goveralls
