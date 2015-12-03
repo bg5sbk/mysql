@@ -20,7 +20,7 @@ install:
     - go build -v ./...
 
 before_script:
-    - mysql -uroot -e 'create database mysql_test;'
+    - mysql -h127.0.0.1 -uroot -e 'create database mysql_test;'
 
 script:
     - go vet -x ./...
