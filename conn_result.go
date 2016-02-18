@@ -19,7 +19,7 @@ const (
 // and lose their original  use Fields.Type to convert
 // them back if needed, using the following functions.
 type connResult struct {
-	c C.MY_RES
+	c *C.MY_RES
 }
 
 func (res *connResult) RowsAffected() int64 {
@@ -96,7 +96,7 @@ func (res *connQueryResult) fillFields() {
 }
 
 func (res *connQueryResult) fetchNext() (row []Value, err error) {
-	crow := C.my_fetch_next(&res.c)
+	crow := C.my_fetch_next(res.c)
 	if crow.has_error != 0 {
 		return nil, res.conn.lastError("")
 	}
@@ -105,7 +105,7 @@ func (res *connQueryResult) fetchNext() (row []Value, err error) {
 }
 
 func (res *connQueryResult) close() {
-	C.my_close_result(&res.c)
+	C.my_close_result(res.c)
 }
 
 func (res *connQueryResult) Fields() []Field {

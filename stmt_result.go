@@ -6,7 +6,7 @@ package mysql
 import "C"
 
 type stmtResult struct {
-	c C.MY_STMT_RES
+	c *C.MY_STMT_RES
 }
 
 func (res *stmtResult) RowsAffected() int64 {
@@ -28,7 +28,7 @@ func (res *stmtQueryResult) fillFields() {
 }
 
 func (res *stmtQueryResult) fetchNext() (row []Value, err error) {
-	crow := C.my_stmt_fetch_next(&res.c)
+	crow := C.my_stmt_fetch_next(res.c)
 	if crow.has_error != 0 {
 		return nil, res.stmt.lastError()
 	}
@@ -37,7 +37,7 @@ func (res *stmtQueryResult) fetchNext() (row []Value, err error) {
 }
 
 func (res *stmtQueryResult) close() {
-	C.my_stmt_close_result(&res.c)
+	C.my_stmt_close_result(res.c)
 }
 
 func (res *stmtQueryResult) Fields() []Field {

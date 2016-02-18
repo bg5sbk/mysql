@@ -81,7 +81,7 @@ typedef struct my_row {
 } MY_ROW;
 
 // mode == MY_MODE_READER uses streaming (use_result). Otherwise it prefetches (store_result).
-extern int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode);
+extern int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_len, MY_MODE mode);
 
 // Iterate on this function until mysql_row == NULL or has_error != 0.
 extern MY_ROW my_fetch_next(MY_RES *res);
@@ -118,7 +118,7 @@ extern int my_stmt_errno(MY_STMT *stmt);
 
 extern const char *my_stmt_error(MY_STMT *stmt);
 
-extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode);
+extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE mode);
 
 extern int my_stmt_close(MY_STMT *stmt);
 

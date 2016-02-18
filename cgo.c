@@ -85,31 +85,34 @@ unsigned long my_real_escape_string(MYSQL *mysql, char *to, const char *from, un
 	return mysql_real_escape_string(mysql, to, from, length);
 }
 
-int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode) {
+int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_len, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (mysql_real_query(mysql, sql_str, sql_len) != 0) {
 		return 1;
 	}
+	
+	*res = (MY_RES*)calloc(1, sizeof(MY_RES));
+	MY_RES *r = *res;
 
 	if (mode != MY_MODE_NONE) {
 		if (mode == MY_MODE_TABLE) {
-			res->result = mysql_store_result(mysql);
+			r->result = mysql_store_result(mysql);
 		} else {
-			res->result = mysql_use_result(mysql);
+			r->result = mysql_use_result(mysql);
 		}
 
-		if (res->result == NULL) {
+		if (r->result == NULL) {
 			return 1;
 		}
 
-		res->meta.num_fields = mysql_num_fields(res->result);
-		res->meta.fields =  mysql_fetch_fields(res->result);
+		r->meta.num_fields = mysql_num_fields(r->result);
+		r->meta.fields =  mysql_fetch_fields(r->result);
 	}
 
-	res->mysql = mysql;
-	res->affected_rows = mysql_affected_rows(mysql);
-	res->insert_id = mysql_insert_id(mysql);
+	r->mysql = mysql;
+	r->affected_rows = mysql_affected_rows(mysql);
+	r->insert_id = mysql_insert_id(mysql);
 
 	return 0;
 }
@@ -155,6 +158,8 @@ void my_close_result(MY_RES *res) {
 			mysql_free_result(result);
 		}
 	}
+	
+	free(res);
 }
 
 int my_prepare(MY_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
@@ -181,7 +186,7 @@ const char *my_stmt_error(MY_STMT *stmt) {
   return mysql_stmt_error(stmt->s);
 }
 
-int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode) {
+int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (binds != NULL) {
@@ -279,9 +284,11 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE 
 		}
 	}
 
-	res->stmt = stmt;
-	res->affected_rows = mysql_stmt_affected_rows(stmt->s);
-	res->insert_id = mysql_stmt_insert_id(stmt->s);
+	*res = (MY_STMT_RES*)calloc(1, sizeof(MY_STMT_RES));
+	MY_STMT_RES *r = *res;
+	r->stmt = stmt;
+	r->affected_rows = mysql_stmt_affected_rows(stmt->s);
+	r->insert_id = mysql_stmt_insert_id(stmt->s);
 
 	return 0;
 }
@@ -376,4 +383,5 @@ MY_ROW my_stmt_fetch_next(MY_STMT_RES *res) {
 void my_stmt_close_result(MY_STMT_RES *res) {
 	mysql_thread_init();
 	mysql_stmt_free_result(res->stmt->s);
+	free(res);
 }
