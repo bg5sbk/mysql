@@ -112,7 +112,7 @@ typedef struct my_stmt_res {
 } MY_STMT_RES;
 
 
-extern int my_prepare(MY_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len);
+extern int my_prepare(MY_STMT **stmt, MYSQL_BIND **binds, MYSQL *mysql, const char *sql_str, unsigned long sql_len);
 
 extern int my_stmt_errno(MY_STMT *stmt);
 
@@ -120,7 +120,7 @@ extern const char *my_stmt_error(MY_STMT *stmt);
 
 extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE mode);
 
-extern int my_stmt_close(MY_STMT *stmt);
+extern int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds);
 
 extern MY_ROW my_stmt_fetch_next(MY_STMT_RES *res);
 

@@ -4,7 +4,10 @@ package mysql
 #include "cgo.h"
 */
 import "C"
-import "unsafe"
+import (
+	"reflect"
+	"unsafe"
+)
 
 var (
 	c_TRUE  = C.my_bool(1)
@@ -14,8 +17,9 @@ var (
 // Prepared statement.
 type Stmt struct {
 	conn     *Connection
-	s        C.MY_STMT
+	s        *C.MY_STMT
 	sql      string
+	bindPtr  *C.MYSQL_BIND
 	binds    []C.MYSQL_BIND
 	bind_pos int
 }
@@ -26,11 +30,16 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.conn = conn
 	stmt.sql = sql
 
-	if C.my_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
+	if C.my_prepare(&stmt.s, &stmt.bindPtr, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
 		return nil, conn.lastError(sql)
 	}
 
-	stmt.binds = make([]C.MYSQL_BIND, int(stmt.s.param_count))
+	if stmt.bindPtr != nil {
+		bindSlice := (*reflect.SliceHeader)(unsafe.Pointer(&stmt.binds))
+		bindSlice.Data = uintptr(unsafe.Pointer(stmt.bindPtr))
+		bindSlice.Len = int(stmt.s.param_count)
+		bindSlice.Cap = bindSlice.Len
+	}
 	return stmt, nil
 }
 
@@ -178,12 +187,7 @@ func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
 
-	var bind *C.MYSQL_BIND
-	if len(stmt.binds) > 0 {
-		bind = &stmt.binds[0]
-	}
-
-	if C.my_stmt_execute(&stmt.s, bind, &res.c, mode) != 0 {
+	if C.my_stmt_execute(stmt.s, stmt.bindPtr, &res.c, mode) != 0 {
 		return stmt.lastError()
 	}
 
@@ -239,7 +243,7 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 
 // Close and dispose the statement.
 func (stmt *Stmt) Close() error {
-	if C.my_stmt_close(&stmt.s) != 0 {
+	if C.my_stmt_close(stmt.s, stmt.bindPtr) != 0 {
 		return stmt.lastError()
 	}
 	return nil

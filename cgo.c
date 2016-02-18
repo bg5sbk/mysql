@@ -162,17 +162,20 @@ void my_close_result(MY_RES *res) {
 	free(res);
 }
 
-int my_prepare(MY_STMT *stmt, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
+int my_prepare(MY_STMT **stmt, MYSQL_BIND **binds, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
 	mysql_thread_init();
 
-	stmt->s = mysql_stmt_init(mysql);
+	*stmt = (MY_STMT*)calloc(1, sizeof(MY_STMT));
+	MY_STMT* s = *stmt;
+	s->s = mysql_stmt_init(mysql);
 
-	if (mysql_stmt_prepare(stmt->s, sql_str, sql_len) != 0) {
+	if (mysql_stmt_prepare(s->s, sql_str, sql_len) != 0) {
 		return 1;
 	}
 
-	stmt->param_count = mysql_stmt_param_count(stmt->s);
-
+	s->param_count = mysql_stmt_param_count(s->s);
+	
+	*binds = (MYSQL_BIND*)calloc(s->param_count, sizeof(MYSQL_BIND));
 	return 0;
 }
 
@@ -293,7 +296,7 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE
 	return 0;
 }
 
-int my_stmt_close(MY_STMT *stmt) {
+int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
 	mysql_thread_init();
 
 	if (stmt->row_cache != NULL) {
@@ -315,6 +318,8 @@ int my_stmt_close(MY_STMT *stmt) {
 		return 1;
 	}
 
+	free(stmt);
+	free(binds);
 	return 0;
 }
 
