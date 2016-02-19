@@ -96,7 +96,7 @@ Prepared Statements
 typedef struct my_stmt {
 	MYSQL_STMT    *s;
 	unsigned long param_count;
-	MY_RES_META  meta;
+	MY_RES_META   meta;
 	my_bool       meta_init;
 	char          **row_cache;
 	size_t        *row_cache_len;
@@ -106,7 +106,7 @@ typedef struct my_stmt {
 
 typedef struct my_stmt_res {
 	MYSQL        *mysql;
-	MY_STMT     *stmt;
+	MY_STMT      *stmt;
 	my_ulonglong affected_rows;
 	my_ulonglong insert_id;
 } MY_STMT_RES;
