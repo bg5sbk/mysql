@@ -4,9 +4,9 @@ sudo: required
 dist: trusty
 
 go:
-    - 1.4.2
-    - 1.5.1
-    - 1.6
+    - 1.4.3
+    - 1.5.2
+    - tip
 
 env:
     - CGO_CFLAGS="`mysql_config --cflags` -std=c99" CGO_LDFLAGS="`mysql_config --libs`" TEST_MYSQL_PASS=123

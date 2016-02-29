@@ -103,6 +103,7 @@ int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_
 		}
 
 		if (r->result == NULL) {
+			free(res);
 			return 1;
 		}
 
@@ -170,6 +171,7 @@ int my_prepare(MY_STMT **stmt, MYSQL_BIND **binds, MYSQL *mysql, const char *sql
 	s->s = mysql_stmt_init(mysql);
 
 	if (mysql_stmt_prepare(s->s, sql_str, sql_len) != 0) {
+		free(stmt);
 		return 1;
 	}
 
