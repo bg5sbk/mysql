@@ -164,7 +164,9 @@ func (conn *Connection) Escape(from string) string {
 
 // Execute a non-query SQL.
 func (conn *Connection) Execute(sql string) (Result, error) {
-	res := &connResult{}
+	res := &connResult{
+		m: &conn.c,
+	}
 
 	err := conn.execute(sql, res, C.MY_MODE_NONE)
 	if err != nil {
@@ -177,6 +179,7 @@ func (conn *Connection) Execute(sql string) (Result, error) {
 // Execute a query and fill result into a DataTable.
 func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 	res := &connDataTable{}
+	res.m = &conn.c
 
 	err := conn.query(sql, &res.connQueryResult, C.MY_MODE_TABLE)
 	if err != nil {
@@ -195,6 +198,7 @@ func (conn *Connection) QueryTable(sql string) (DataTable, error) {
 // Execute a query and return the result reader. NOTE: Please remember close the reader.
 func (conn *Connection) QueryReader(sql string) (DataReader, error) {
 	res := &connDataReader{}
+	res.m = &conn.c
 
 	err := conn.query(sql, &res.connQueryResult, C.MY_MODE_READER)
 	if err != nil {
@@ -214,7 +218,7 @@ func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) err
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
-
+	println("execute")
 	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
 		return conn.lastError(sql)
 	}

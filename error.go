@@ -54,8 +54,8 @@ func (self *StmtError) Number() int {
 }
 
 func (stmt *Stmt) lastError() error {
-	if err := C.my_stmt_error(&stmt.s); *err != 0 {
-		return &StmtError{Num: int(C.my_stmt_errno(&stmt.s)), Message: C.GoString(C.my_stmt_error(&stmt.s)), Stmt: stmt}
+	if err := C.my_stmt_error(stmt.s); *err != 0 {
+		return &StmtError{Num: int(C.my_stmt_errno(stmt.s)), Message: C.GoString(C.my_stmt_error(stmt.s)), Stmt: stmt}
 	}
 	return &StmtError{0, "Unknow", stmt}
 }

@@ -4,7 +4,10 @@ package mysql
 #include "cgo.h"
 */
 import "C"
-import "unsafe"
+import (
+	"reflect"
+	"unsafe"
+)
 
 var (
 	c_TRUE  = C.my_bool(1)
@@ -14,8 +17,9 @@ var (
 // Prepared statement.
 type Stmt struct {
 	conn     *Connection
-	s        C.MY_STMT
+	s        *C.MY_STMT
 	sql      string
+	bindPtr  *C.MYSQL_BIND
 	binds    []C.MYSQL_BIND
 	bind_pos int
 }
@@ -26,11 +30,16 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.conn = conn
 	stmt.sql = sql
 
-	if C.my_prepare(&stmt.s, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
+	if C.my_prepare(&stmt.s, &stmt.bindPtr, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
 		return nil, conn.lastError(sql)
 	}
 
-	stmt.binds = make([]C.MYSQL_BIND, int(stmt.s.param_count))
+	if stmt.bindPtr != nil {
+		bindSlice := (*reflect.SliceHeader)(unsafe.Pointer(&stmt.binds))
+		bindSlice.Data = uintptr(unsafe.Pointer(stmt.bindPtr))
+		bindSlice.Len = int(stmt.s.param_count)
+		bindSlice.Cap = bindSlice.Len
+	}
 	return stmt, nil
 }
 
@@ -183,7 +192,7 @@ func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {
 		bind = &stmt.binds[0]
 	}
 
-	if C.my_stmt_execute(&stmt.s, bind, &res.c, mode) != 0 {
+	if C.my_stmt_execute(stmt.s, bind, &res.c, mode) != 0 {
 		return stmt.lastError()
 	}
 
@@ -202,6 +211,7 @@ func (stmt *Stmt) query(res *stmtQueryResult, mode C.MY_MODE) error {
 // Execute statement as none-query.
 func (stmt *Stmt) Execute() (Result, error) {
 	res := &stmtResult{}
+	res.s = stmt.s
 
 	if err := stmt.execute(res, C.MY_MODE_NONE); err != nil {
 		return nil, err
@@ -213,6 +223,7 @@ func (stmt *Stmt) Execute() (Result, error) {
 // Execute statement and fill result into a DataTable.
 func (stmt *Stmt) QueryTable() (DataTable, error) {
 	res := &stmtDataTable{}
+	res.s = stmt.s
 
 	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_TABLE); err != nil {
 		return nil, err
@@ -229,6 +240,7 @@ func (stmt *Stmt) QueryTable() (DataTable, error) {
 // Execute statement and return a result reader. NOTE: Please remember close the reader.
 func (stmt *Stmt) QueryReader() (DataReader, error) {
 	res := &stmtDataReader{}
+	res.s = stmt.s
 
 	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_READER); err != nil {
 		return nil, err
@@ -239,9 +251,14 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 
 // Close and dispose the statement.
 func (stmt *Stmt) Close() error {
-	if C.my_stmt_close(&stmt.s) != 0 {
+	if stmt.s == nil {
+		return nil
+	}
+	if C.my_stmt_close(stmt.s, stmt.bindPtr) != 0 {
 		return stmt.lastError()
 	}
+	stmt.s = nil
+	stmt.binds = nil
 	return nil
 }
 
