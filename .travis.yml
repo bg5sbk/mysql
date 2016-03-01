@@ -21,6 +21,7 @@ before_install:
 install:
     - go get github.com/mattn/goveralls
     - go get github.com/funny/utest
+	- go get golang.org/x/tools/cmd/cover
     - go get -d -v ./...
     - go build -v ./...
 
