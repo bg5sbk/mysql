@@ -28,7 +28,6 @@ install:
 
 script:
     - go vet -x ./...
-    - go test -v ./...
     - go test -covermode=count -coverprofile=profile.cov .
 
 after_script:
