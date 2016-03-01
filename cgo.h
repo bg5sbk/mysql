@@ -66,10 +66,9 @@ typedef struct my_res_meta {
 } MY_RES_META;
 
 typedef struct my_res {
-	MYSQL        *mysql;
 	my_ulonglong affected_rows;
 	my_ulonglong insert_id;
-	MY_RES_META meta;
+	MY_RES_META  meta;
 	MYSQL_RES    *result;
 } MY_RES;
 
@@ -81,13 +80,13 @@ typedef struct my_row {
 } MY_ROW;
 
 // mode == MY_MODE_READER uses streaming (use_result). Otherwise it prefetches (store_result).
-extern int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_len, MY_MODE mode);
+extern int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode);
 
 // Iterate on this function until mysql_row == NULL or has_error != 0.
-extern MY_ROW my_fetch_next(MY_RES *res);
+extern MY_ROW my_fetch_next(MYSQL *mysql, MY_RES *res);
 
 // If my_query has results, you must call this before the next invocation.
-extern void my_close_result(MY_RES *res);
+extern void my_close_result(MYSQL *mysql, MY_RES *res);
 
 /*
 Prepared Statements
@@ -105,8 +104,6 @@ typedef struct my_stmt {
 } MY_STMT;
 
 typedef struct my_stmt_res {
-	MYSQL        *mysql;
-	MY_STMT      *stmt;
 	my_ulonglong affected_rows;
 	my_ulonglong insert_id;
 } MY_STMT_RES;
@@ -118,12 +115,12 @@ extern int my_stmt_errno(MY_STMT *stmt);
 
 extern const char *my_stmt_error(MY_STMT *stmt);
 
-extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE mode);
+extern int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode);
 
 extern int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds);
 
-extern MY_ROW my_stmt_fetch_next(MY_STMT_RES *res);
+extern MY_ROW my_stmt_fetch_next(MY_STMT *stmt, MY_STMT_RES *res);
 
-extern void my_stmt_close_result(MY_STMT_RES *res);
+extern void my_stmt_close_result(MY_STMT *stmt, MY_STMT_RES *res);
 
 #endif

@@ -31,7 +31,6 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.sql = sql
 
 	if C.my_prepare(&stmt.s, &stmt.bindPtr, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
-		stmt.Close()
 		return nil, conn.lastError(sql)
 	}
 
@@ -191,7 +190,6 @@ func (stmt *Stmt) execute(res *stmtResult, mode C.MY_MODE) error {
 	if C.my_stmt_execute(stmt.s, stmt.bindPtr, &res.c, mode) != 0 {
 		return stmt.lastError()
 	}
-
 	return nil
 }
 
@@ -207,6 +205,7 @@ func (stmt *Stmt) query(res *stmtQueryResult, mode C.MY_MODE) error {
 // Execute statement as none-query.
 func (stmt *Stmt) Execute() (Result, error) {
 	res := &stmtResult{}
+	res.s = stmt.s
 
 	if err := stmt.execute(res, C.MY_MODE_NONE); err != nil {
 		return nil, err
@@ -218,6 +217,7 @@ func (stmt *Stmt) Execute() (Result, error) {
 // Execute statement and fill result into a DataTable.
 func (stmt *Stmt) QueryTable() (DataTable, error) {
 	res := &stmtDataTable{}
+	res.s = stmt.s
 
 	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_TABLE); err != nil {
 		return nil, err
@@ -234,6 +234,7 @@ func (stmt *Stmt) QueryTable() (DataTable, error) {
 // Execute statement and return a result reader. NOTE: Please remember close the reader.
 func (stmt *Stmt) QueryReader() (DataReader, error) {
 	res := &stmtDataReader{}
+	res.s = stmt.s
 
 	if err := stmt.query(&res.stmtQueryResult, C.MY_MODE_READER); err != nil {
 		return nil, err
@@ -244,9 +245,14 @@ func (stmt *Stmt) QueryReader() (DataReader, error) {
 
 // Close and dispose the statement.
 func (stmt *Stmt) Close() error {
+	if stmt.s == nil {
+		return nil
+	}
 	if C.my_stmt_close(stmt.s, stmt.bindPtr) != 0 {
 		return stmt.lastError()
 	}
+	stmt.s = nil
+	stmt.binds = nil
 	return nil
 }
 

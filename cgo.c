@@ -85,39 +85,34 @@ unsigned long my_real_escape_string(MYSQL *mysql, char *to, const char *from, un
 	return mysql_real_escape_string(mysql, to, from, length);
 }
 
-int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_len, MY_MODE mode) {
+int my_query(MYSQL *mysql, MY_RES *res, const char *sql_str, unsigned long sql_len, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (mysql_real_query(mysql, sql_str, sql_len) != 0) {
 		return 1;
 	}
-	
-	*res = (MY_RES*)calloc(1, sizeof(MY_RES));
-	MY_RES *r = *res;
 
 	if (mode != MY_MODE_NONE) {
 		if (mode == MY_MODE_TABLE) {
-			r->result = mysql_store_result(mysql);
+			res->result = mysql_store_result(mysql);
 		} else {
-			r->result = mysql_use_result(mysql);
+			res->result = mysql_use_result(mysql);
 		}
 
-		if (r->result == NULL) {
+		if (res->result == NULL) {
 			return 1;
 		}
 
-		r->meta.num_fields = mysql_num_fields(r->result);
-		r->meta.fields =  mysql_fetch_fields(r->result);
+		res->meta.num_fields = mysql_num_fields(res->result);
+		res->meta.fields =  mysql_fetch_fields(res->result);
 	}
 
-	r->mysql = mysql;
-	r->affected_rows = mysql_affected_rows(mysql);
-	r->insert_id = mysql_insert_id(mysql);
-
+	res->affected_rows = mysql_affected_rows(mysql);
+	res->insert_id = mysql_insert_id(mysql);
 	return 0;
 }
 
-MY_ROW my_fetch_next(MY_RES *res) {
+MY_ROW my_fetch_next(MYSQL *mysql, MY_RES *res) {
 	MY_ROW row = {0, 0, 0};
 
 	if(res->meta.num_fields == 0) {
@@ -128,7 +123,7 @@ MY_ROW my_fetch_next(MY_RES *res) {
 
 	row.mysql_row = mysql_fetch_row(res->result);
 	if (!row.mysql_row) {
-		if(mysql_errno(res->mysql)) {
+		if(mysql_errno(mysql)) {
 			row.has_error = 1;
 			return row;
 		}
@@ -139,10 +134,7 @@ MY_ROW my_fetch_next(MY_RES *res) {
 	return row;
 }
 
-void my_close_result(MY_RES *res) {
-	if (res == NULL)
-		return;
-
+void my_close_result(MYSQL *mysql, MY_RES *res) {
 	MYSQL_RES *result;
 
 	mysql_thread_init();
@@ -153,16 +145,14 @@ void my_close_result(MY_RES *res) {
 
 	// Ignore subsequent results if any. We only
 	// return the first set of results for now.
-	while (mysql_next_result(res->mysql) == 0) {
-		result = mysql_store_result(res->mysql);
+	while (mysql_next_result(mysql) == 0) {
+		result = mysql_store_result(mysql);
 		if (result) {
 			// while(mysql_fetch_row(result)) {
 			// }
 			mysql_free_result(result);
 		}
 	}
-	
-	free(res);
 }
 
 int my_prepare(MY_STMT **stmt, MYSQL_BIND **binds, MYSQL *mysql, const char *sql_str, unsigned long sql_len) {
@@ -192,7 +182,7 @@ const char *my_stmt_error(MY_STMT *stmt) {
   return mysql_stmt_error(stmt->s);
 }
 
-int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE mode) {
+int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES *res, MY_MODE mode) {
 	mysql_thread_init();
 
 	if (binds != NULL) {
@@ -290,19 +280,12 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE
 		}
 	}
 
-	*res = (MY_STMT_RES*)calloc(1, sizeof(MY_STMT_RES));
-	MY_STMT_RES *r = *res;
-	r->stmt = stmt;
-	r->affected_rows = mysql_stmt_affected_rows(stmt->s);
-	r->insert_id = mysql_stmt_insert_id(stmt->s);
-
+	res->affected_rows = mysql_stmt_affected_rows(stmt->s);
+	res->insert_id = mysql_stmt_insert_id(stmt->s);
 	return 0;
 }
 
 int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
-	if (stmt == NULL)
-		return 1;
-		
 	mysql_thread_init();
 
 	if (stmt->row_cache != NULL) {
@@ -323,18 +306,15 @@ int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
 	if (mysql_stmt_close(stmt->s) != 0) {
 		return 1;
 	}
-	
+
 	if (binds != NULL) {
 		free(binds);
 	}
-
 	free(stmt);
 	return 0;
 }
 
-MY_ROW my_stmt_fetch_next(MY_STMT_RES *res) {
-	MY_STMT *stmt = res->stmt;
-
+MY_ROW my_stmt_fetch_next(MY_STMT *stmt, MY_STMT_RES *res) {
 	MY_ROW row = {0, 0, 0};
 
 	if (stmt->meta.num_fields == 0) {
@@ -390,12 +370,10 @@ MY_ROW my_stmt_fetch_next(MY_STMT_RES *res) {
 
 	row.mysql_row = (MYSQL_ROW)stmt->row_cache;
 	row.lengths = stmt->output_lengths;
-
 	return row;
 }
 
-void my_stmt_close_result(MY_STMT_RES *res) {
+void my_stmt_close_result(MY_STMT *stmt, MY_STMT_RES *res) {
 	mysql_thread_init();
-	mysql_stmt_free_result(res->stmt->s);
-	free(res);
+	mysql_stmt_free_result(stmt->s);
 }
