@@ -301,7 +301,7 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE
 
 int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
 	if (stmt == NULL)
-		return;
+		return 1;
 		
 	mysql_thread_init();
 

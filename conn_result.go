@@ -30,6 +30,10 @@ func (res *connResult) InsertId() int64 {
 	return int64(res.c.insert_id)
 }
 
+func (res *connResult) close() {
+	C.my_close_result(res.c)
+}
+
 type connQueryResult struct {
 	connResult
 	conn   *Connection
@@ -102,10 +106,6 @@ func (res *connQueryResult) fetchNext() (row []Value, err error) {
 	}
 
 	return fetchNext(res.c.meta, crow, false)
-}
-
-func (res *connQueryResult) close() {
-	C.my_close_result(res.c)
 }
 
 func (res *connQueryResult) Fields() []Field {
