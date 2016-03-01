@@ -216,6 +216,7 @@ func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) err
 	}
 
 	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
+		res.close()
 		return conn.lastError(sql)
 	}
 

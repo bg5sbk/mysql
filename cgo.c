@@ -103,7 +103,6 @@ int my_query(MYSQL *mysql, MY_RES **res, const char *sql_str, unsigned long sql_
 		}
 
 		if (r->result == NULL) {
-			free(res);
 			return 1;
 		}
 
@@ -141,6 +140,9 @@ MY_ROW my_fetch_next(MY_RES *res) {
 }
 
 void my_close_result(MY_RES *res) {
+	if (res == NULL)
+		return;
+
 	MYSQL_RES *result;
 
 	mysql_thread_init();
@@ -171,7 +173,6 @@ int my_prepare(MY_STMT **stmt, MYSQL_BIND **binds, MYSQL *mysql, const char *sql
 	s->s = mysql_stmt_init(mysql);
 
 	if (mysql_stmt_prepare(s->s, sql_str, sql_len) != 0) {
-		free(stmt);
 		return 1;
 	}
 
@@ -299,6 +300,9 @@ int my_stmt_execute(MY_STMT *stmt, MYSQL_BIND *binds, MY_STMT_RES **res, MY_MODE
 }
 
 int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
+	if (stmt == NULL)
+		return;
+		
 	mysql_thread_init();
 
 	if (stmt->row_cache != NULL) {
@@ -319,9 +323,12 @@ int my_stmt_close(MY_STMT *stmt, MYSQL_BIND *binds) {
 	if (mysql_stmt_close(stmt->s) != 0) {
 		return 1;
 	}
+	
+	if (binds != NULL) {
+		free(binds);
+	}
 
 	free(stmt);
-	free(binds);
 	return 0;
 }
 

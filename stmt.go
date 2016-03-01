@@ -31,6 +31,7 @@ func (conn *Connection) Prepare(sql string) (*Stmt, error) {
 	stmt.sql = sql
 
 	if C.my_prepare(&stmt.s, &stmt.bindPtr, &conn.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql))) != 0 {
+		stmt.Close()
 		return nil, conn.lastError(sql)
 	}
 
