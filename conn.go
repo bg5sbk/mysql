@@ -218,11 +218,9 @@ func (conn *Connection) execute(sql string, res *connResult, mode C.MY_MODE) err
 	if conn.IsClosed() {
 		return &SqlError{Num: 2006, Message: "Connection is closed"}
 	}
-	println("execute")
 	if C.my_query(&conn.c, &res.c, (*C.char)(stringPointer(sql)), C.ulong(len(sql)), mode) != 0 {
 		return conn.lastError(sql)
 	}
-
 	return nil
 }
 
