@@ -27,7 +27,6 @@ int my_open(
     const char    *db,
     unsigned int  port,
     const char    *unix_socket,
-    const char    *csname,
     unsigned long client_flag
 ) {
 	mysql_thread_init();
@@ -37,11 +36,6 @@ int my_open(
 	if (!mysql_real_connect(mysql, host, user, passwd, db, port, unix_socket, client_flag)) {
 		return 1;
 	}
-
-	if (!mysql_set_character_set(mysql, csname)) {
-		return 1;
-	}
-
 	return 0;
 }
 

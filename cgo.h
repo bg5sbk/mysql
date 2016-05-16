@@ -24,7 +24,6 @@ extern int my_open(
 	const char    *db,
 	unsigned int  port,
 	const char    *unix_socket,
-	const char    *csname,
 	unsigned long client_flag
 );
 
